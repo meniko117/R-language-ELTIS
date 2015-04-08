@@ -1,0 +1,16 @@
+#считывание файла и запись в кодировке
+con<-read.csv("C:/Users/Hp/Dropbox/Мои документы/Программирование/R/Project/ELTIS/Components data.csv")
+con2 <- as.data.frame(sapply(con,gsub,pattern=";",replacement=","))
+write.csv(con2, 'C:/Users/Hp/Dropbox/Мои документы/Программирование/R/Project/ELTIS/Components data UTF.csv')
+
+# вставка в write (..., fileEncoding = "UTF-8")
+
+
+is.data.frame(con2)
+
+
+diamonds<- read.csv ("C:/Users/Hp/Dropbox/Мои документы/Программирование/R/Project/ELTIS/orders schedule UTF.csv")
+
+# вставка в write (..., fileEncoding = "UTF-8")
+
+con3<-as.data.frame(sapply(con,gsub, pattern=";",replacement=","))
