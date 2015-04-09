@@ -1,0 +1,111 @@
+# ELTIS build
+
+library(shiny)
+library(ggplot2)  # for the diamonds dataset
+
+diamonds<- read.csv ("components5.csv")
+#components<-read.csv("components5.csv")
+colnames <- names(diamonds) #вектор названий колонок
+
+shinyUI(fluidPage(
+  title = 'Examples of DataTables',
+  sidebarLayout(
+    sidebarPanel(
+      conditionalPanel(
+        'input.dataset === "diamonds"', 
+        checkboxGroupInput('show_vars', 'Показывать колонки:',
+                           names(diamonds), selected = colnames[3:15])
+      ),
+      conditionalPanel(        
+        'input.dataset === "diamonds"',
+        helpText('Click the column header to sort a column.')
+        
+      ),
+      conditionalPanel(
+        'input.dataset === "diamonds"',
+        helpText('Display 5 records by default.')
+      ),
+      width = 2),
+    
+    mainPanel(
+      
+      (navbarPage(                 # меню
+        title = 'Группы отчетов',
+        
+        tabPanel('Основные',  
+                 
+                 
+                 
+                 fluidRow(
+                   column(4,
+                          htmlOutput("google")
+                   ), 
+                   column(4, offset = 4,
+                          htmlOutput("googleGoods") 
+                   )),  
+                 
+                 
+                 
+                 fluidRow(
+                   column(4, 
+                 tags$iframe(src = "https://plot.ly/~alekswis/26/house-price-to-income-ratio-latest-to-historical-average/",  
+                             frameBorder="0", width ="600px", height = "600px")),
+                 
+                 column(4, offset = 4,
+                  tags$iframe(src = "https://plot.ly/~bronsolo/46/relative-daily-index-closings/", 
+                             frameBorder="0", width = "600px", height = "600px") 
+                 ))     ), 
+                 
+        tabPanel("Обеспеченность ГП", 
+                 
+                 
+                 tags$iframe(src = "https://plot.ly/~geomando/0/",  frameBorder="0", width =
+                               "800px", height = "800px"),
+                 
+                 tags$iframe(src = "https://plot.ly/~bronsolo/46/relative-daily-index-closings/", 
+                             frameBorder="0", width = "800px", height = "800px")
+                 
+                 
+                 ),
+        
+        tabPanel("График отгрузок ГП",      
+                 tabsetPanel(          # вложенное меню (2-й уровень)
+                   
+                   
+                   id = 'dataset',
+                   tabPanel(value = 'diamonds', 'Москва', dataTableOutput('mytable1')),
+                   tabPanel('Санкт-Петербург', dataTableOutput('mytable2')),
+                   tabPanel('Новосибирск', dataTableOutput('mytable3')), 
+                   tabPanel('Диаграммы', plotOutput("plot1"),
+                            
+                            fluidRow( column(4,
+                                             plotOutput("plot2")),
+                                      
+                                      column(4, offset = 4,
+                                             plotOutput("plot3")
+                                      )      
+                            ))
+                   
+                   
+                 )),
+        # первый уровень меню
+        tabPanel("Комплектующие",
+                 
+                 tabsetPanel( 
+                   
+                   tabPanel("График закупок ПКИ",  tags$iframe(src = "https://plot.ly/~geomando/0/",  frameBorder="0", width =
+                                                            "800px", height = "800px")),
+                   
+                   tabPanel("График платежей ПКИ",tags$iframe(src = "https://plot.ly/~meniko117/7/", frameBorder="0", width = 
+                                                   "800px", height = "800px")),
+                   
+                   tabPanel("Динамика",tags$iframe(src = "https://plot.ly/~bronsolo/46/relative-daily-index-closings/", 
+                                                   frameBorder="0", width = "800px", height = "800px"))
+                 ) 
+                 
+                 
+                 
+        ))
+      ))
+    
+  )))
