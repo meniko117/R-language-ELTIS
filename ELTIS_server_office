@@ -1,0 +1,80 @@
+#ELTIS build
+
+library(shiny)
+library(googleVis)
+
+shinyServer(function(input, output) {
+  diamonds<- read.csv ("components5.csv")
+#  components<-read.csv("components5.csv")
+  
+  # a large table, reative to input$show_vars
+  output$mytable1 <- renderDataTable({
+    #library(ggplot2)
+    diamonds [, input$show_vars, drop = FALSE]
+  })
+  
+  # sorted columns are colored now because CSS are attached to them
+  output$mytable2 <- renderDataTable({
+    diamonds
+  }, options = list(orderClasses = TRUE))
+  
+  # customize the length drop-down menu; display 5 rows per page by default
+  output$mytable3 <- renderDataTable({
+    iris
+  }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5))
+  
+  
+  
+  
+  
+  output$plot1 <- renderPlot({
+    slices <- c(10, 12, 4, 16, 8) 
+    lbls <- c("US", "UK", "Australia", "Germany", "France")
+    pct <- round(slices/sum(slices)*100)
+    lbls <- paste(lbls, pct) # add percents to labels 
+    lbls <- paste(lbls,"%",sep="") # ad % to labels 
+    pie(slices,labels = lbls, col=rainbow(length(lbls)),
+        main="Pie Chart of Countries")
+  })
+  
+  output$plot2 <- renderPlot({
+    slices <- c(20, 22, 4, 36, 8) 
+    lbls <- c("US", "UK", "Australia", "Germany", "France")
+    pct <- round(slices/sum(slices)*100)
+    lbls <- paste(lbls, pct) # add percents to labels 
+    lbls <- paste(lbls,"%",sep="") # ad % to labels 
+    pie(slices,labels = lbls, col=rainbow(length(lbls)),
+        main="Pie Chart of Countries")
+  })
+  
+  output$plot3 <- renderPlot({
+    slices <- c(50, 22, 4, 36, 18) 
+    lbls <- c("US", "UK", "Australia", "Germany", "France")
+    pct <- round(slices/sum(slices)*100)
+    lbls <- paste(lbls, pct) # add percents to labels 
+    lbls <- paste(lbls,"%",sep="") # ad % to labels 
+    pie(slices,labels = lbls, col=rainbow(length(lbls)),
+        main="Pie Chart of Countries")
+  })
+  
+  CityPopularity<- read.csv("C:/Documents and Settings/smirnov/РњРѕРё РґРѕРєСѓРјРµРЅС‚С‹/R/win-library/3.1/shiny/examples/Eltis build/payments.csv")
+  output$google<-renderGvis({ gvisGauge(CityPopularity, 
+                                        options=list(min=0, max=800, greenFrom=500,
+                                                     greenTo=800, yellowFrom=300, yellowTo=500,
+                                                     redFrom=0, redTo=300, width=200, height=200))
+                                                            
+  })
+  
+  goods<-read.csv("C:/Documents and Settings/smirnov/РњРѕРё РґРѕРєСѓРјРµРЅС‚С‹/R/win-library/3.1/shiny/examples/Eltis build/sales.csv")
+  output$googleGoods<-renderGvis({ gvisGauge(goods, 
+                                        options=list(min=0, max=800, greenFrom=500,
+                                                     greenTo=800, yellowFrom=300, yellowTo=500,
+                                                     redFrom=0, redTo=300, width=200, height=200))
+                              
+  })
+  
+  
+  
+})
+
+
