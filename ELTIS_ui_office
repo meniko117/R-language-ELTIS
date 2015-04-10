@@ -34,7 +34,7 @@ shinyUI(fluidPage(
         
         tabPanel('Основные',  
                  
-                 
+                # tags$iframe(src = "http://widgetsmonster.com/w1428250696-classic_grey__pro&283&283/",frameBorder="0",width = "300px", height = "300px"), 
                  
                  fluidRow(
                    column(4,
@@ -47,33 +47,91 @@ shinyUI(fluidPage(
                  
                  
                  fluidRow(
-                   column(4, 
-                 tags$iframe(src = "https://plot.ly/~alekswis/26/house-price-to-income-ratio-latest-to-historical-average/",  
-                             frameBorder="0", width ="600px", height = "600px")),
-                 
-                 column(4, offset = 4,
+                   column(6, htmlOutput("googleSales", width = "600px", height = "600px") 
+                                           
+                          ),
+                   
+                   
+                   column(6, htmlOutput("googleItems", width = "600px", height = "600px") 
+                          
+                   )),
+                   
+                 fluidRow(
+                 column(4, 
                   tags$iframe(src = "https://plot.ly/~bronsolo/46/relative-daily-index-closings/", 
                              frameBorder="0", width = "600px", height = "600px") 
-                 ))     ), 
-                 
-        tabPanel("Обеспеченность ГП", 
-                 
-                 
-                 tags$iframe(src = "https://plot.ly/~geomando/0/",  frameBorder="0", width =
-                               "800px", height = "800px"),
-                 
-                 tags$iframe(src = "https://plot.ly/~bronsolo/46/relative-daily-index-closings/", 
-                             frameBorder="0", width = "800px", height = "800px")
-                 
-                 
                  ),
+                 column(4, offset = 4,
+                 tags$iframe(src = "https://plot.ly/~alekswis/26/house-price-to-income-ratio-latest-to-historical-average/",  
+                             frameBorder="0", width ="600px", height = "600px")  
+                 
+                  )     
         
-        tabPanel("График отгрузок ГП",      
+                   
+          )),
+        
+        
+        
+        
+        # первый уровень меню
+        tabPanel("Комплектующие",
+                 
+                 tabsetPanel( 
+                   
+                   
+                   id = 'dataset',
+                   
+                   
+                   tabPanel("График сборки",  
+                            
+                            h4("Временные затраты на комплектацию, сборку и упаковку с учетом  комплектующих и оплаченных заказов"),
+                                             br(),
+                                             br(),
+                                             br(),
+                            
+                                                                                
+                            htmlOutput("googleGantt", width = "600px", height = "600px")),
+                   
+                   tabPanel("График закупок ПКИ",
+                            
+                            
+                            value = 'diamonds', 
+                                     
+                                     h4("Распределение средств в запасах ПКИ"),
+                                     br(),
+                                     br(),
+                                     br(),
+                                     dataTableOutput('mytable1')
+                                                        
+                            ),
+                   
+                   
+                   
+                   tabPanel("График платежей",tags$iframe(src = "https://plot.ly/~bronsolo/46/relative-daily-index-closings/", 
+                                                   frameBorder="0", width = "800px", height = "800px"))
+                 ) 
+                 
+                 
+                 
+        ),  
+        
+        
+        
+ 
+        
+        tabPanel("Выпуск ГП",      
                  tabsetPanel(          # вложенное меню (2-й уровень)
                    
                    
                    id = 'dataset',
-                   tabPanel(value = 'diamonds', 'Москва', dataTableOutput('mytable1')),
+                   tabPanel('Москва', 
+                            
+                            h4("Распределение средств в запасах ПКИ"),
+                            br(),
+                            br(),
+                            br(),
+                            dataTableOutput('mytable4')),
+                   
                    tabPanel('Санкт-Петербург', dataTableOutput('mytable2')),
                    tabPanel('Новосибирск', dataTableOutput('mytable3')), 
                    tabPanel('Диаграммы', plotOutput("plot1"),
@@ -87,25 +145,9 @@ shinyUI(fluidPage(
                             ))
                    
                    
-                 )),
-        # первый уровень меню
-        tabPanel("Комплектующие",
-                 
-                 tabsetPanel( 
-                   
-                   tabPanel("График закупок ПКИ",  tags$iframe(src = "https://plot.ly/~geomando/0/",  frameBorder="0", width =
-                                                            "800px", height = "800px")),
-                   
-                   tabPanel("График платежей ПКИ",tags$iframe(src = "https://plot.ly/~meniko117/7/", frameBorder="0", width = 
-                                                   "800px", height = "800px")),
-                   
-                   tabPanel("Динамика",tags$iframe(src = "https://plot.ly/~bronsolo/46/relative-daily-index-closings/", 
-                                                   frameBorder="0", width = "800px", height = "800px"))
-                 ) 
-                 
-                 
-                 
-        ))
+                 ))
+        
+        )
       ))
-    
-  )))
+  ))
+  )
