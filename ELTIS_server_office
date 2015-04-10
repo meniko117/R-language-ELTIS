@@ -5,6 +5,7 @@ library(googleVis)
 
 shinyServer(function(input, output) {
   diamonds<- read.csv ("components5.csv")
+  MSKdeliver<-read.csv ("MSK deliver.csv")
 #  components<-read.csv("components5.csv")
   
   # a large table, reative to input$show_vars
@@ -15,15 +16,19 @@ shinyServer(function(input, output) {
   
   # sorted columns are colored now because CSS are attached to them
   output$mytable2 <- renderDataTable({
-    diamonds
+    MSKdeliver
   }, options = list(orderClasses = TRUE))
   
   # customize the length drop-down menu; display 5 rows per page by default
   output$mytable3 <- renderDataTable({
-    iris
+    MSKdeliver
   }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5))
   
   
+output$mytable4 <- renderDataTable({
+  MSKdeliver
+}, options = list(lengthMenu = c(5, 30, 50), pageLength = 50))
+
   
   
   
@@ -73,7 +78,50 @@ shinyServer(function(input, output) {
                               
   })
   
-  
+df=data.frame(country=c("Москва", "Санкт-Петербург", "Новосибирск"), 
+              факт =c(10,30,40), 
+              план =c(23,19,32))
+
+output$googleSales <- renderGvis(gvisBarChart(df))
+
+
+Bubble <- gvisBubbleChart(df, idvar="Fruit", 
+                          xvar="Sales", yvar="Expenses",
+                          colorvar="Year", sizevar="Profit",
+                          options=list(
+                            hAxis='{minValue:75, maxValue:125}'))
+
+
+output$googleItems <- renderGvis(gvisBubbleChart(df,options=list(
+  hAxis='{minValue:0, maxValue:60}', vAxis='{minValue:0, maxValue:50}')))
+
+
+
+
+dat <- data.frame(Room=c("DP400-RDC24","DP5000-KFDC42","VM500-CL", "B-21", "KM100-7.1", 
+                         "SC5000-D1", "ELTIS VS1/4-4"),
+                  #Language=c("picking", "assembly", "packing"),
+                  start=as.POSIXct(c("2014-03-14 14:00", 
+                                     "2014-03-14 15:00",
+                                     "2014-03-14 14:30",
+                                     "2014-03-14 14:30",
+                                     "2014-03-14 14:20",
+                                     "2014-03-14 16:00",
+                                     "2014-03-14 16:30")),
+                  end=as.POSIXct(c("2014-03-14 15:00", 
+                                   "2014-03-14 16:00",
+                                   "2014-03-14 15:30",
+                                   "2014-03-14 16:00",
+                                   "2014-03-14 15:10",
+                                   "2014-03-14 16:45",
+                                   "2014-03-14 19:00")))
+output$googleGantt <- renderGvis(
+  gvisTimeline(data=dat, 
+               rowlabel="Room", #barlabel="Language", 
+               start="start", end="end", options=list(width=600, height=450, fontSize=9
+               )))
+
+
   
 })
 
