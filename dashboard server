@@ -6,6 +6,8 @@ library(googleVis)
 shinyServer(function(input, output) {
   diamonds<- read.csv ("components5.csv")
   MSKdeliver<-read.csv ("MSK deliver.csv")
+  topstock<-read.csv ("top stock.csv")
+  
 #  components<-read.csv("components5.csv")
   
   # a large table, reative to input$show_vars
@@ -30,6 +32,39 @@ output$mytable4 <- renderDataTable({
 }, options = list(lengthMenu = c(5, 30, 50), pageLength = 50))
 
   
+
+output$mytable5 <- renderDataTable({
+  topstock
+}, options = list(lengthMenu = c(5, 30, 50), pageLength = 5
+                                      
+                                      
+#                                       initComplete = JS(
+#                                         "function(settings, json) {",
+#                                         "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
+#                                         "}")
+                                      
+                                      
+                                      
+                                      ))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
   
   output$plot1 <- renderPlot({
@@ -98,14 +133,31 @@ df=data.frame(country=c("Москва", "Санкт-Петербург", "Нов
               план =c(45,35,45))
 
 output$googleSales <- renderGvis(gvisBarChart(df))
-
-
-
 output$vertSales <- renderGvis(gvisColumnChart(df))
-
 output$lineSales <- renderGvis(gvisLineChart(df))
 
 
+
+
+topstockbars<-read.csv ("top stock bars.csv")
+topstocknames<-read.csv ("top stock names.csv")
+topstockqty<-read.csv ("top stock qty.csv")
+
+# df2<-data.frame(country=topstocknames, 
+#                  qty =topstockqty, 
+#                  plan =topstockqty)
+#   
+  
+df2<- read.csv ("top stock bars.csv")
+df2<-as.data.frame(df2) 
+  
+output$topstockbars <- renderGvis(gvisColumnChart(df2, xvar="Name", yvar="Сумма_руб",
+                                                  options=list(seriesType="bars", legend="top",
+                                                               bar="{groupWidth:'60%'}",
+                                                               width=1200, height=400,
+                                                               
+                                                               colors="['green']",
+                                                  chartid="thincolumns")))
 
 
 
@@ -203,6 +255,38 @@ output$approvalBox <- renderValueBox({
     color = "yellow"
   )
 })
+
+
+df3 <- data.frame(Year=2013:2014, Sales=c(120, 130), 
+                 Sales.interval.1=c(100,110), 
+                 Sales.interval.2=c(140, 150),
+                 Sales.interval.3=c(90, 100),
+                 Sales.interval.4=c(150, 170),
+                 Sales.style=c('red', 'gold'),
+                 Sales.annotation=c("VM500-CL", "M500-CL"),
+                 check.names=FALSE)
+
+output$coolbars<-renderGvis(
+  gvisBarChart(df3, xvar='Year', 
+               yvar=c('Sales',                       
+                      'Sales.interval.1', 
+                      'Sales.interval.2',
+                      'Sales.style',
+                      'Sales.annotation')
+  )
+)
+
+
+
+
+
+
+
+
+  
+})
+
+
 
 
 
