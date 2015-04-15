@@ -147,10 +147,11 @@ ui <- dashboardPage( skin = "blue",
                 
                 
                  fluidRow(
-                   column(4, h4("Как у нас с платежами"),
+                   column(4, 
                           
                                
-                         box(width=12,  status = "warning", htmlOutput("doughnut"), height= 400),
+                         box(title = "Как у нас с платежами", width=12,  status = "warning", htmlOutput("doughnut", height= 400),  solidHeader = TRUE,
+                             collapsible = TRUE),
                           br(),
                           br()
                    ), 
@@ -200,6 +201,28 @@ ui <- dashboardPage( skin = "blue",
                 br(),
                 br(),
                 br(),
+                
+                htmlOutput("topstockbars", width = "600px", height = "1200px"), 
+                
+                br(),
+                br(),
+                br(),
+                br(),
+                
+                
+                htmlOutput("coolbars", width = "600px", height = "600px"), 
+                
+                br(),
+                br(),
+                br(),
+                br(),
+                
+                
+                box(title = "Как у нас с запасами", width=6,  status = "warning", dataTableOutput('mytable5'), solidHeader = TRUE,
+                    collapsible = TRUE),
+                
+             
+                
                 
                  fluidRow(
                    column(4, 
