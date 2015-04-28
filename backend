@@ -2,7 +2,7 @@ library(readxl)
 rat<-read_excel("C:/Users/Hp/Dropbox/Мои документы/Программирование/R/Project/ELTIS/all stock.xlsx")
 #заменить NA на ноль
 rat[is.na(rat)]<-0
-#получить размерность таблицы
+#получит размерность таблицы
 nrow<-nrow(rat)
 ncol<-ncol(rat)
 #создать вектор из наименованиий столбцов
@@ -19,7 +19,7 @@ df_order<- data.frame(matrix(nrow=nrow, ncol=ncol))
 
 
 #вынимаем числовые значения из общего массива
-rat_matrix<- as.matrix(rat[5:2778, 6:49])
+rat_matrix<- as.matrix(rat[1:2778, 1:49])
 
 
 # работает триггер заказ/нет заказа
@@ -53,11 +53,19 @@ system.time(for (ncol in 6:49)
 })
 
 
-
-system.time(for (ncol in 6:49)
+system.time(for (m in 1:49)
 {
-  df_order[,ncol]<-as.matrix(sapply(df_order, function(х) {
-    as.numeric(rat[,ncol])/as.numeric(rat[,ncol])
+  df_order[,m]<-as.matrix(sapply(df_order, function(х) {
+    as.numeric(rat[,m])/as.numeric(rat[,m])
   }))
   
 })
+
+
+system.time(
+
+  df_k<-sapply(df_order, function(х) {
+    as.numeric(rat_matrix)/as.numeric(rat_matrix)
+  })
+  
+)
