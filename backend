@@ -1,0 +1,63 @@
+library(readxl)
+rat<-read_excel("C:/Users/Hp/Dropbox/Мои документы/Программирование/R/Project/ELTIS/all stock.xlsx")
+#заменить NA на ноль
+rat[is.na(rat)]<-0
+#получить размерность таблицы
+nrow<-nrow(rat)
+ncol<-ncol(rat)
+#создать вектор из наименованиий столбцов
+header<-rat[1,]
+#получить номер колонки заданного склада
+match("Склад готовой продукции (Произ-во)", header)
+#добавление колонки
+rat$sum<-as.numeric(rat[,24]) + 10
+# con2 <- as.data.frame(sapply(con,gsub,pattern=",",replacement="."))
+
+
+# формируем таблицу- "триггер заказа"
+df_order<- data.frame(matrix(nrow=nrow, ncol=ncol))
+
+
+#вынимаем числовые значения из общего массива
+rat_matrix<- as.matrix(rat[5:2778, 6:49])
+
+
+# работает триггер заказ/нет заказа
+system.time(apply(rat_matrix, 1:2, function(х) ifelse(as.numeric(х)/2>3, "yes","no")))
+
+wow<-apply(rat_matrix, 1:2, function(х) ifelse(as.numeric(х)/2>3, "yes","no"))
+
+
+
+# присваивание значений массиву 2-мя циклами
+system.time(for (nrow in 1:nrow)
+{
+  #названия
+  for (ncol in 1:ncol)
+  {
+    df_order[nrow,ncol] = rat[nrow,ncol]
+  }
+  
+})
+
+
+
+
+# присваивание элементов матриц
+system.time(for (ncol in 6:49)
+{
+  df_order[,ncol]<-as.matrix(sapply(df_order, function(х) {
+    df_order[,ncol]=rat[,ncol]
+  }))
+  
+})
+
+
+
+system.time(for (ncol in 6:49)
+{
+  df_order[,ncol]<-as.matrix(sapply(df_order, function(х) {
+    as.numeric(rat[,ncol])/as.numeric(rat[,ncol])
+  }))
+  
+})
