@@ -92,3 +92,26 @@ system.time(for (m in 9:49)
   })
   
 })
+
+
+# RCPP
+cppFunction('NumericVector rowSumsC(NumericMatrix x) {
+  int nrow = x.nrow(), ncol = x.ncol();
+  NumericVector out(nrow);
+
+  for (int i = 0; i < nrow; i++) {
+    double total = 0;
+    for (int j = 2; j < 3; j++) {
+      total = x(i, j)-x(i,j-1);
+    }
+    out[i] = total;
+  }
+  return out;
+}')
+
+set.seed(1014)
+k <- matrix(sample(100), 10)
+
+rowSumsC(k)
+  
+
