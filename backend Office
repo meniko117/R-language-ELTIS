@@ -1,0 +1,94 @@
+library(readxl)
+library(readr)
+rat<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.xls")
+#заменить NA на ноль
+rat[is.na(rat)]<-0
+
+
+write.csv(rat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.сsv")
+
+sat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.сsv", 
+              skip=1, na.strings=c(" ", NA))
+
+sat[is.na(sat)]<-0
+
+write.csv(sat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.сsv")
+#с пропуском рядов "объединенных ячеек"
+sat2<-read_csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.сsv", 
+               skip=2)
+
+sat2[12,12]-100
+
+
+
+
+#получит размерность таблицы
+nrow<-nrow(rat)
+ncol<-ncol(rat)
+#создать вектор из наименованиий столбцов
+header<-rat[1,]
+#получить номер колонки заданного склада
+match("Склад готовой продукции (Произ-во)", header)
+#добавление колонки
+rat$sum<-as.numeric(rat[,24]) + 10
+# con2 <- as.data.frame(sapply(con,gsub,pattern=",",replacement="."))
+
+
+# формируем пустую таблицу- "триггер заказа"
+df_order<- data.frame(matrix(nrow=nrow-3, ncol=ncol))
+
+
+#вынимаем числовые значения из общего массива
+rat_matrix<- as.matrix(rat[5:2778, 6:49])
+
+
+# работает триггер заказ/нет заказа
+system.time(apply(rat_matrix, 1:2, function(х) ifelse(as.numeric(х)/2>3, "yes","no")))
+
+wow<-as.data.frame(apply(rat_matrix, 1:2, function(х) ifelse(as.numeric(х)/2>3, "yes","no")))
+
+
+
+# присваивание значений массиву 2-мя циклами
+system.time(for (u in 3:nrow)
+{
+  
+  for (v in 8:ncol)
+  {
+    sat2[u,v] = sat2[u,v-1]
+  }
+  
+})
+
+
+
+
+# присваивание элементов матриц
+system.time(for (ncol in 6:49)
+{
+  df_order[,ncol]<-as.matrix(sapply(df_order, function(х) {
+    df_order[,ncol]=rat[,ncol]
+  }))
+  
+})
+
+# корректное деление матриц
+system.time(for (m in 10:48)
+{
+    df_order[,m]<-sapply(df_order, function(х) {
+    as.numeric(rat[,m])+as.numeric(df_order[,m-1])
+  }) 
+
+  
+})
+
+
+# корректное деление матриц при использовании пакета readr и чтении csv 
+#с пропуском рядов "объединенных ячеек"
+system.time(for (m in 9:49)
+{
+  df_order[,m]<-sapply(df_order, function(х) {
+    as.numeric(sat2[,m])+as.numeric(df_order[,m-1])
+  })
+  
+})
