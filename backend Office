@@ -1,117 +1,317 @@
 library(readxl)
 library(readr)
-rat<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.xls")
+library(stringr)
+library (reshape2)
+
+
+##
+##загружаем данные по остаткам на всех складах
+##
+allStock<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.xls")
 #заменить NA на ноль
-rat[is.na(rat)]<-0
+allStock[is.na(allStock)]<-0
+
+header<-allStock[1,]
 
 
-write.csv(rat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.сsv")
+#обработать содержимое для получения цифр
+write.csv(allStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.сsv")
 
 sat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.сsv", 
-              skip=1, na.strings=c(" ", NA))
-
-sat[is.na(sat)]<-0
+              , skip=1, na.strings=c(" ", NA), stringsAsFactors=FALSE) 
 
 write.csv(sat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.сsv")
-#с пропуском рядов "объединенных ячеек"
+
 sat2<-read_csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/all stock.сsv", 
-               skip=2)
+               skip=2) 
+#добавить заголовки стобцов
+names(sat2)<-c(0,0,header)
 
-sat2[12,12]-100
-
-
-
-
-#получит размерность таблицы
-nrow<-nrow(rat)
-ncol<-ncol(rat)
-#создать вектор из наименованиий столбцов
-header<-rat[1,]
 #получить номер колонки заданного склада
-match("Склад готовой продукции (Произ-во)", header)
-#добавление колонки
-rat$sum<-as.numeric(rat[,24]) + 10
-# con2 <- as.data.frame(sapply(con,gsub,pattern=",",replacement="."))
+warehouseStock<-match("Склад ПКИ и материалы", colnames(sat2))
+stockComponents<-sat2[,c(4,6,warehouseStock)]
+names(stockComponents)<-c("code", "item")
+
+stockComponents[is.na(stockComponents)]<-0
 
 
-# формируем пустую таблицу- "триггер заказа"
-df_order<- data.frame(matrix(nrow=nrow-3, ncol=ncol))
-
-
-#вынимаем числовые значения из общего массива
-rat_matrix<- as.matrix(rat[5:2778, 6:49])
-
-
-# работает триггер заказ/нет заказа
-system.time(apply(rat_matrix, 1:2, function(х) ifelse(as.numeric(х)/2>3, "yes","no")))
-
-wow<-as.data.frame(apply(rat_matrix, 1:2, function(х) ifelse(as.numeric(х)/2>3, "yes","no")))
+##
+## конец блока загрузки данных по остаткам
 
 
 
-# присваивание значений массиву 2-мя циклами
-system.time(for (u in 3:nrow)
-{
-  
-  for (v in 8:ncol)
-  {
-    sat2[u,v] = sat2[u,v-1]
-  }
-  
-})
+#парсинг даты отчета по остаткам
+date<-names(allStock)[1]
+library(stringr)
+dateReport<-str_sub(date, start= -8)
+
+weekReport<-round(as.numeric(
+  difftime(strptime(dateReport, format = "%d.%m.%y"),
+           strptime("01.01.2015", format = "%d.%m.%Y"), units="weeks") +1), digits=0)
+
+#присвоили номер недели текущим остаткам
+names(stockComponents)[3]<-weekReport
 
 
 
 
-# присваивание элементов матриц
-system.time(for (ncol in 6:49)
-{
-  df_order[,ncol]<-as.matrix(sapply(df_order, function(х) {
-    df_order[,ncol]=rat[,ncol]
-  }))
-  
-})
+# загружаем таблицу с полным ассортиментом, который держим на контроле и параметрами (срок доставки, страховой запас и проч.)
+param<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/stockFlowParameters.xls")
 
-# корректное деление матриц
-system.time(for (m in 10:48)
-{
-    df_order[,m]<-sapply(df_order, function(х) {
-    as.numeric(rat[,m])+as.numeric(df_order[,m-1])
-  }) 
+names(param)<-c("code", "item", "price",  "safety stock", "lead time", "order quantity", "supplier")
 
-  
-})
+names(weeklySales)<-c("code","items", c("1":"52"))
+
+#создать таблицу с полным ассортиментом и 52-неделями пустых значений
+#сделать сводную таблицу, включив остатки по текущей неделе 
+#(ежнедельно догружать остатки в имеющуюся таблицу)
+currentStock<-as.data.frame(matrix(nrow=nrow(param), ncol=54))
+currentStock[,1:2]<-param[,1:2]
+names(currentStock)<-c("code", "item", c(1:52))
+
+#получаем таблицу с еженедельными остатками и для текущей недели обновляем данные
+weeklyStock<-merge(currentStock, stockComponents, by ="code", all.x= TRUE)
+
+# вставить блок с парсингом типа "17.y"
+# затем подать получившуюся матрицу на вход Rcpp блока
 
 
-# корректное деление матриц при использовании пакета readr и чтении csv 
-#с пропуском рядов "объединенных ячеек"
-system.time(for (m in 9:49)
-{
-  df_order[,m]<-sapply(df_order, function(х) {
-    as.numeric(sat2[,m])+as.numeric(df_order[,m-1])
-  })
-  
-})
+
+nam<-colnames(stockComponents) # номера недель, где есть заказы
+nam2<-colnames(weeklyStock) # все идентификаторы недель, после объединения таблиц
+difnames<-paste(nam, ".x", sep ="") [3]
+difnames2<-paste(nam, ".y", sep ="") [3]
+
+len<-length(weeklyStock) # 
+
+colindex<-match(difnames,nam2) # поиск номеров колонок в 52-недельной матрице, совмещенной с матрцие заказов, которые совпали с матрицей заказов
+colindex2<-match(difnames2,nam2) # поиск номеров колонок в матрцие заказов, которые совпали неделями заказов
+
+
+
+#присваиваем значения размещенных заказов общей таблице, включающей понедельный план
+weeklyStock[,colindex]<-weeklyStock[,colindex2]
+
+names(weeklyStock)<-c("code","item", c("1":"52"))
+weeklyStock[is.na(weeklyStock)]<-0 # получили таблицу с остатком на текущей неделе в 52-недельной матрице
+stockAtHand<-as.matrix(weeklyStock[,3:54]) # матрица с остатками для передачи в RCPP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##
+## получаем 52-недельную матрицу с размещенными заказами на каждой неделе (ТОВАРЫ В ПУТИ)
+##
+rat<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/goodsTransit2.xls",skip=2, col_names = FALSE)
+nr<-nrow(rat)
+
+for (m in 2:nr)
+{rat[m,14]<-as.numeric(rat[m,6])
+}
+
+
+code<-regexpr(']',rat[,5])
+rat$code<-substr(rat[,5], 2, code-1)
+rat$orderDate<-str_sub(rat[,8], start= -8)
+
+rat$orderWeek<-round(as.numeric(
+  difftime(strptime(rat$orderDate, format = "%d.%m.%y"),
+           strptime("01.01.2015", format = "%d.%m.%Y"), units="weeks") +1), digits=0)
+
+wTable<-subset(rat, select=c( 15, 5,  17, 14))
+
+
+names(wTable)<-c("code", "item", "orderWeek", "quantity")
+
+# получаем таблицу план-график размещенных заказов
+resTable<-dcast(wTable, item ~ orderWeek, fun.aggregate=sum)
+# добавляем колонку с кодом
+code<-regexpr(']',resTable[,1])
+resTable$code<-substr(resTable[,1], 2, code-1)
+
+
+
+# # создаем пустую таблицу
+# calendf<-as.data.frame(matrix(nrow=154, ncol=52))
+# 
+# 
+# names(calendf)<-c("1":"52")
+# 
+# calendf[6:154,1]<-resTable[6:154,1]
+# names(calendf)<-c("item", c("1":"51"))
+# 
+# # сводная таблица для обеспечения размщения заказов в 52-недельной матрице
+# all<-merge(calendf, resTable, by = "item", all = TRUE)
+
+
+
+
+
+# code<-regexpr(']',all[,1])
+# all$code<-substr(all[,1], 2, code-1)
+
+
+weeklyOrders<-merge(currentStock, resTable, by ="code", all.x= TRUE)
+
+nam<-colnames(resTable) # номера недель, где есть заказы
+nam2<-colnames(weeklyOrders) # все идентификаторы недель, после объединения таблиц
+difnames<-paste(nam, ".x", sep ="") 
+difnames2<-paste(nam, ".y", sep ="") 
+
+len<-length(nam) # 
+
+colindex<-match(difnames,nam2)[4:len-2] # поиск номеров колонок в 52-недельной матрице, совмещенной с матрцие заказов, которые совпали с матрицей заказов
+colindex2<-match(difnames2,nam2)[4:len-2] # поиск немеров колонок в матрице заказов, которые совпали неделями заказов
+
+
+
+#присваиваем значения размещенных заказов общей таблице, включающей понедельный план
+weeklyOrders[,colindex]<-weeklyOrders[,colindex2]
+
+names(weeklyOrders)<-c("code","items", c("1":"52"))
+weeklyOrders[is.na(weeklyOrders)]<-0
+
+
+##
+## получаем 3 таблицы: остатки, заказы, потребление в размерности на 52 недели
+##
+weeklyStock<-weeklyStock[,1:54]
+weeklyOrders<-weeklyOrders[,1:54]
+weeklySales<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/weeklySales.xls")
+names(weeklySales)<-c("code","items", c("1":"52"))
+
+
+weeklySales2<-merge(currentStock, weeklySales, by ="code", all.x= TRUE)
+
+
+
+# 4 таблица
+# param - data frame  со всеми параметрами (срок доставки, страховой запас, количество в заказе)
+
+
+
+
+
+
+
+
+
+
+#RCPP
+
+
+k <- matrix(50, 10,50)
+m <- matrix(20, 10,50)
+
+placedOrders<-matrix(10, 10,50)
+placedOrders[,c(5:10, 12:18, 25:28)]<-0
+placedOrders[,36]<-100
+
+
+
+# РґР°РЅРЅС‹Рµ РЅР° 20-СЋ РЅРµРґРµР»СЋ
+k[,20]<-c(30,50,10,200,40,150,0,80,20,114)
+m [,20:22] <- c(150,10,10,0,40,100,0,80,20,114)
+
+
+
 
 
 # RCPP
-cppFunction('NumericVector rowSumsC(NumericMatrix x) {
-  int nrow = x.nrow(), ncol = x.ncol();
-  NumericVector out(nrow);
+# функция на C++, которой аргументами передаются
+# матрицы, каждая из которых включает весь перечень позиций в одинаковом порядке
+# матрица x - остатки по неделям (прошлые фактические и расчетные)
+# матрица y - потребление по неделям
+# матрица z - товары в пути по неделям (из отчета по счетам, по которым не получен товар)
+# матрица p - параметры (в неделях): срок доставки, страховой запас, размер заказа
 
-  for (int i = 0; i < nrow; i++) {
-    double total = 0;
-    for (int j = 2; j < 3; j++) {
-      total = x(i, j)-x(i,j-1);
-    }
-    out[i] = total;
-  }
-  return out;
-}')
+cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, NumericMatrix z) {
+            int nrow = x.nrow(), ncol = x.ncol();
+            
+            NumericMatrix out(nrow*3, ncol);
+            
+            
+            
+            for (int i = 0; i < nrow; i++) {         // проход по рядам
+            
+            for (int j = 6; j < 50; j++) {           // проход по колонкам в ряду
+            out (i,5)=75;                            // создали начальные остатки по рядам
+            out (i+2*nrow, j) = z(i,j);             // включаем блок с товарами в пути (нижняя треть таблицы)
+            
+            out (i,j) = out(i, j-1)-y(i,j)+z(i,j)+out(i+nrow,j-4); // результирующее значение по остаткам на начало недели
+            //вычитаем расход за предыдущую неделю и добавляем сгенерированный заказ на lead time недель ранее
+            // также добавляем товары в пути, которые поступают на текущей неделе
+            
+            
+            
+            if (out(i,j) < 20 && j>29) {                       //триггер "заказ"-"нет заказа"
+            out (i+nrow,j)= 60;                //генерирование величины заказа в зависимости от плана продаж
+            }
+            else {
+            out (i+nrow,j) =0;                // значение "0", если остаток не меньше "страхового" запаса
+            
+            }
+            }                                       // конец обхода колонок
+            
+            }                                       // конец обхода рядов
+            
+            
+            
+            for (int i = 0; i < nrow; i++) {         // проход по рядам НОВЫй ЦИКЛ
+            
+            for (int j = 6; j < 50; j++) {           // проход по колонкам в ряду для смещения сгенерированного заказа 
+            //на более ранний срок равный "сроку доставки"
+            
+            out (i+nrow,j) = out(i+nrow, j+3);
+            out (i,j) = out(i, j-1)-y(i,j)+z(i,j)+out(i+nrow,j-4);
+            
+            }
+            
+            }
+            
+            for (int r = 0; r < ncol; r++) {         // ДОБАВЛЕННЫЙ ЦИКЛ проход по КОЛИЧЕСТВУ КОЛОНОК
+            
+            for (int i = 0; i < nrow; i++) {
+            
+            for (int j = 6; j < 50; j++) {    
+            if (out(i,j+3) < 20 && j>29 ) {                       //обнуление "лишних заказов"
+            out (i+nrow,j)= 60;
+            }
+            else {
+            out (i+nrow,j) =0;
+            
+            }
+            out (i,j) = out(i, j-1)-y(i,j)+z(i,j)+out(i+nrow,j-4);
+            
+            }                                       // конец обхода колонок
+            
+            
+            }                                       // конец обхода рядов
+            
+            
+            } //ДОБАВЛЕННЫЙ ЦИКЛ
+            
+            
+            return out;                             // возврат вектора значений по всем рядам
+            
+            }')
 
-set.seed(1014)
-k <- matrix(sample(100), 10)
+rat<-stockTurnover(k,m,placedOrders)
 
-rowSumsC(k)
-  
 
