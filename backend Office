@@ -2,6 +2,7 @@ library(readxl)
 library(readr)
 library(stringr)
 library (reshape2)
+library (Rcpp)
 
 
 ##
@@ -58,7 +59,7 @@ names(stockComponents)[3]<-weekReport
 # загружаем таблицу с полным ассортиментом, который держим на контроле и параметрами (срок доставки, страховой запас и проч.)
 param<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/stockFlowParameters.xls")
 
-names(param)<-c("code", "item", "price",  "safety stock", "lead time", "order quantity", "supplier")
+names(param)<-c("code", "item", "MOQ", "safety stock", "lead time", "order quantity")
 
 # names(weeklySales)<-c("code","items", c("1":"52"))
 
@@ -203,23 +204,29 @@ weeklySales<-read_excel("C:/Documents and Settings/smirnov/Мои докумен
 
 currentStock[,1:2]<-weeklyStock[,1:2]
 weeklySales2<-merge(currentStock, weeklySales, by ="code", all.x= TRUE)
+colnames(weeklySales2)<-c("code", "items", "1":"52")
+
+weeklySales2[,3:54]<-weeklySales2[,56:107] 
+weeklySales2<- weeklySales2[,1:54]
+
+#сортируем параметры товародвижения в установленном порядке
+parameters<-merge(currentStock, param, by ="code", all.x= TRUE)
+
+ # получили 4 матрицы для передачи в RCPP
+StockMatrix<-as.matrix(weeklyStock[,3:54])
+OrdersMatrix<-as.matrix(weeklyOrders[,3:54])
+SalesMatrix<-as.matrix(weeklySales2[,3:54])
+ParametersMatrix<-as.matrix(parameters[,c(57,59,58)])
 
 
 
 
-
-
-
-
-
-
-
-write.csv(weeklyStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/weeklyStock.csv")
-
-write.csv(weeklyOrders, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/weeklyOrders.csv")
-
-write.csv(weeklySales2, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/weeklySales.csv")
-
+# write.csv(weeklyStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/weeklyStock.csv")
+# 
+# write.csv(weeklyOrders, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/weeklyOrders.csv")
+# 
+# write.csv(weeklySales2, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/weeklySales.csv")
+# 
 
 # 4 таблица
 # param - data frame  со всеми параметрами (срок доставки, страховой запас, количество в заказе)
@@ -233,7 +240,7 @@ write.csv(weeklySales2, "C:/Documents and Settings/smirnov/Мои докумен
 
 
 # RCPP
-library (Rcpp)
+
 
 # функция на C++, которой аргументами передаются
 # матрицы, каждая из которых включает весь перечень позиций в одинаковом порядке
@@ -287,7 +294,7 @@ cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, Numer
             
             for (int i = 0; i < nrow; i++) {         // проход по рядам
             
-            for (int j = 6; j < 50; j++) {           // проход по колонкам в ряду
+            for (int j = 16; j < 50; j++) {           // проход по колонкам в ряду
             out (i,5)=75;                            // создали начальные остатки по рядам
             out (i+2*nrow, j) = z(i,j);             // включаем блок с товарами в пути (нижняя треть таблицы)
             
@@ -312,7 +319,7 @@ cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, Numer
             
             for (int i = 0; i < nrow; i++) {         // проход по рядам НОВЫй ЦИКЛ
             
-            for (int j = 6; j < 50; j++) {           // проход по колонкам в ряду для смещения сгенерированного заказа 
+            for (int j = 16; j < 50; j++) {           // проход по колонкам в ряду для смещения сгенерированного заказа 
             //на более ранний срок равный "сроку доставки"
             
             out (i+nrow,j) = out(i+nrow, j+(p(i,2)-1));
@@ -326,7 +333,7 @@ cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, Numer
             
             for (int i = 0; i < nrow; i++) {
             
-            for (int j = 6; j < 50; j++) {
+            for (int j = 16; j < 50; j++) {
             
             if (out(i,j+p(i,2)-1) < p(i,0)*y(i,j) && j> t ) {                       //обнуление "лишних заказов"
             out (i+nrow,j)= p(i,1)*y(i,j);
@@ -350,4 +357,20 @@ cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, Numer
             
             }')
 
-rat<-stockTurnover(k,m,placedOrders, parameters, time)
+#rat<-stockTurnover(k,m,placedOrders, parameters, time)
+
+
+
+rat<-stockTurnover(StockMatrix,SalesMatrix,OrdersMatrix, ParametersMatrix, time)
+NamesMatrix<-as.data.frame(matrix(nrow=nrow(rat), ncol=2))
+NamesMatrix<- weeklyStock[rep(row.names(weeklyStock), 3), 1:2]
+
+statusMatrix<-as.data.frame(matrix(nrow=nrow(rat), ncol=1))
+statusMatrix[1:nrow(rat)/3, ]<-"остатки"
+statusMatrix[nrow(rat)/3+1:nrow(rat)/3*2, ]<-"заказы"
+statusMatrix[(nrow(rat)/3*2+1):nrow(rat), ]<- "в пути"
+
+
+
+report<-cbind(NamesMatrix,statusMatrix, rat)
+write.csv(report, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/report.csv")
