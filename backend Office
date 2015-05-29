@@ -723,7 +723,121 @@ write.csv(reportNSK, "C:/Documents and Settings/smirnov/Мои документ�
 
 
 
+#
+#
+#
+#
+#
 
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#обработка дат и получение помесячного плана производства
+#
+#
+
+
+library (lubridate)
+#РґР°С‚С‹ РЅР°С‡Р°Р»Р° РєР°Р¶РґРѕР№ РЅРµРґРµР»Рё
+weekBegin<- data.frame(matrix(nrow=1, ncol=52))
+#weekBegin[1]<-as.Date(strptime("01.01.2015", format = "%d.%m.%Y"))
+
+#номер дня недели (функция из lubridate) для текущего года
+# в строке ниже при смене года заменить на первое января наступающего года
+
+firstMonday<- as.Date(strptime("01.01.2015", format = "%d.%m.%Y"))-(wday(as.Date(strptime("01.01.2015", format = "%d.%m.%Y")))-2)
+
+weekBegin[1]<-firstMonday
+
+
+for (i in 1:51 ) {
+  weekBegin[i+1] = weekBegin[i] +days(7)
+}
+
+
+#РЅРѕРјРµСЂ РјРµСЃСЏС†Р° РґР»СЏ РєР°Р¶РґРѕР№ РЅРµРґРµР»Рё
+monthBegin<- data.frame(matrix(nrow=1, ncol=52))
+for (i in 1:52 ) {
+ 
+  monthBegin[1,i] <- month(as.POSIXlt(weekBegin[1,i], format="%d.%m.%Y"))
+}
+
+colnames(weekBegin)<-monthBegin[1,]
+
+row<-as.data.frame(matrix(nrow=1,ncol=52))
+row[is.na(row)]<-0
+
+
+
+weekBegin3<- rbind(weekBegin [ ,1], row)
+
+
+
+
+
+colnames (weekBegin3)<- colnames (weekBegin)
+
+weekBegin3 [2,1] <-1
+
+for (i in 2:52 ) {
+ifelse ( colnames(weekBegin3)[i] == colnames(weekBegin3)[i-1], weekBegin3 [2,i]<- weekBegin3 [2,i-1]+1, weekBegin3 [2,i]<-1)
+
+}
+
+
+
+for (i in 1:52 ) {
+  weekBegin3[1,i] <- as.character(weekBegin[1, i])
+}
+
+# для приведения размерности в соответствие
+twocolumns<-as.data.frame(matrix(nrow=2,ncol=2))
+
+alltimeHeader<- cbind(twocolumns, weekBegin3)
+
+#номера месяцев рассчитанных по дате понедельника
+monthnumber<-as.data.frame(matrix(nrow=1,ncol=54))
+monthnumber<-colnames(alltimeHeader)
+alltimeHeader<- rbind(monthnumber, alltimeHeader)
+
+colnames(alltimeHeader)<-c("code", "item.x", c(1:52))
+
+
+#
+# весь график производства с указанием (номера недели, номера месяца, даты понедельника, количества недель в месяце)
+#
+totalProductiontime<- rbind(alltimeHeader, totalProduction)
+
+
+# формируем таблицу для потребности по месяцам 
+monthlyProductionPlan<-as.data.frame(matrix(nrow=243,ncol=12))
+monthlyProductionPlan[is.na(monthlyProductionPlan)]<-0
+
+
+#проходим по всей таблице понедельных потребностей и складываем потребности, относящиеся к одному месяцу
+
+for (m in 4:246 ) {
+  
+for (i in 3:53 ) {
+  
+  
+         
+ monthlyProductionPlan [m-3, as.numeric(totalProductiontime [1,i]) ] <- 
+ monthlyProductionPlan [m-3, as.numeric(totalProductiontime [1,i]) ] + as.numeric(totalProductiontime [m,i])#  
+}
+
+}
+
+# monthlyProductionPlan - помесячный план производства
 
 
 
