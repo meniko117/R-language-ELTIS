@@ -752,7 +752,7 @@ weekBegin<- data.frame(matrix(nrow=1, ncol=52))
 #weekBegin[1]<-as.Date(strptime("01.01.2015", format = "%d.%m.%Y"))
 
 #номер дня недели (функция из lubridate) для текущего года
-# в строке ниже при смене года заменить на первое января наступающего года
+# в строке ниже при смене года заменить на первое января наступающего года (в 2-х местах)
 
 firstMonday<- as.Date(strptime("01.01.2015", format = "%d.%m.%Y"))-(wday(as.Date(strptime("01.01.2015", format = "%d.%m.%Y")))-2)
 
@@ -818,7 +818,7 @@ colnames(alltimeHeader)<-c("code", "item.x", c(1:52))
 totalProductiontime<- rbind(alltimeHeader, totalProduction)
 
 
-# формируем таблицу для потребности по месяцам 
+# формируем пустую таблицу для потребности по месяцам 
 monthlyProductionPlan<-as.data.frame(matrix(nrow=243,ncol=12))
 monthlyProductionPlan[is.na(monthlyProductionPlan)]<-0
 
@@ -832,7 +832,7 @@ for (i in 3:53 ) {
   
          
  monthlyProductionPlan [m-3, as.numeric(totalProductiontime [1,i]) ] <- 
- monthlyProductionPlan [m-3, as.numeric(totalProductiontime [1,i]) ] + as.numeric(totalProductiontime [m,i])#  
+ round(monthlyProductionPlan [m-3, as.numeric(totalProductiontime [1,i]) ] + as.numeric(totalProductiontime [m,i]))#  
 }
 
 }
@@ -840,5 +840,154 @@ for (i in 3:53 ) {
 # monthlyProductionPlan - помесячный план производства
 
 
+itemNames<- totalProductiontime [4:nrow(totalProductiontime), 1:2]
+monthlyProductionPlan<- cbind(itemNames, monthlyProductionPlan)
+
+colnames (monthlyProductionPlan) <- c("code", "item", "янв", "фев", "март", "апр", "май", "июнь", "июль", "август", "сент", "окт", "ноябрь", "дек")
 
 
+#
+# формируем аналогичный план производства помесячно для Москвы
+#
+totalProductiontimeMSK<- rbind(alltimeHeader, reportMSK [(nrow(flowMSK)/3+1):(nrow(flowMSK)/3*2), c(1, 2, 4:55)])
+
+
+
+# формируем пустую таблицу для потребности по месяцам 
+monthlyProductionPlanMSK<-as.data.frame(matrix(nrow=243,ncol=12))
+monthlyProductionPlanMSK[is.na(monthlyProductionPlanMSK)]<-0
+
+
+
+for (m in 4:246 ) {
+  
+  for (i in 3:53 ) {
+    
+    
+    
+    monthlyProductionPlanMSK [m-3, as.numeric(totalProductiontimeMSK [1,i]) ] <- 
+      round(monthlyProductionPlanMSK [m-3, as.numeric(totalProductiontimeMSK [1,i]) ] + as.numeric(totalProductiontimeMSK [m,i]))#  
+  }
+  
+}
+
+
+itemNames<- totalProductiontimeMSK [4:nrow(totalProductiontimeMSK), 1:2]
+monthlyProductionPlanMSK <- cbind(itemNames, monthlyProductionPlanMSK)
+
+colnames (monthlyProductionPlanMSK) <- c("code", "item", "янв", "фев", "март", "апр", "май", "июнь", "июль", "август", "сент", "окт", "ноябрь", "дек")
+
+
+#
+# формируем аналогичный план производства помесячно для Санкт-Петербурга
+#
+
+totalProductiontimeSPb<- rbind(alltimeHeader, reportSPb [(nrow(flowSPb)/3+1):(nrow(flowSPb)/3*2), c(1, 2, 4:55)])
+
+
+
+# формируем пустую таблицу для потребности по месяцам 
+monthlyProductionPlanSPb<-as.data.frame(matrix(nrow=243,ncol=12))
+monthlyProductionPlanSPb[is.na(monthlyProductionPlanSPb)]<-0
+
+
+
+for (m in 4:246 ) {
+  
+  for (i in 3:53 ) {
+    
+    
+    
+    monthlyProductionPlanSPb [m-3, as.numeric(totalProductiontimeSPb [1,i]) ] <- 
+      round(monthlyProductionPlanSPb [m-3, as.numeric(totalProductiontimeSPb [1,i]) ] + as.numeric(totalProductiontimeSPb [m,i]))#  
+  }
+  
+}
+
+
+itemNames<- totalProductiontimeSPb [4:nrow(totalProductiontimeSPb), 1:2]
+monthlyProductionPlanSPb <- cbind(itemNames, monthlyProductionPlanSPb)
+
+colnames (monthlyProductionPlanSPb) <- c("code", "item", "янв", "фев", "март", "апр", "май", "июнь", "июль", "август", "сент", "окт", "ноябрь", "дек")
+
+
+#
+# формируем аналогичный план производства помесячно для Новосибирска
+#
+
+totalProductiontimeNSK<- rbind(alltimeHeader, reportNSK [(nrow(flowNSK)/3+1):(nrow(flowNSK)/3*2), c(1, 2, 4:55)])
+
+
+
+# формируем пустую таблицу для потребности по месяцам 
+monthlyProductionPlanNSK<-as.data.frame(matrix(nrow=243,ncol=12))
+monthlyProductionPlanNSK[is.na(monthlyProductionPlanNSK)]<-0
+
+
+
+for (m in 4:246 ) {
+  
+  for (i in 3:53 ) {
+    
+        
+    monthlyProductionPlanNSK [m-3, as.numeric(totalProductiontimeNSK [1,i]) ] <- 
+      round(monthlyProductionPlanNSK [m-3, as.numeric(totalProductiontimeNSK [1,i]) ] + as.numeric(totalProductiontimeNSK [m,i]))#  
+  }
+  
+}
+
+
+itemNames<- totalProductiontimeNSK [4:nrow(totalProductiontimeNSK), 1:2]
+monthlyProductionPlanNSK <- cbind(itemNames, monthlyProductionPlanNSK)
+
+colnames (monthlyProductionPlanNSK) <- c("code", "item", "янв", "фев", "март", "апр", "май", "июнь", "июль", "август", "сент", "окт", "ноябрь", "дек")
+
+#
+# рассчитываем доли (в %) потребности каждого филиала в общей потребности
+#
+
+partMSK <- monthlyProductionPlanMSK[ , 3:14]/ monthlyProductionPlan[ , 3:14]
+partSPb <- monthlyProductionPlanSPb[ , 3:14]/ monthlyProductionPlan[ , 3:14]
+partNSK <- monthlyProductionPlanNSK[ , 3:14]/ monthlyProductionPlan[ , 3:14]
+
+
+
+
+
+
+
+
+
+
+
+
+##
+# формирование графика отгурзки в каждый филиал на основе утвержденного плана производства из 1С,
+# допзаказов и рассчитанных долей потребностей каждого филиала в общем плане производства
+
+
+# Загружаем перечень готовой продукции library readr И readxl
+#productionPlan1C<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/production plan 1С_3.xls")
+
+productionPlan1C<-read.table("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/production plan 1С_3.csv", skip = 2, 
+                             sep = ";", header = TRUE)
+
+productionPlan1C<- productionPlan1C[ , c(2, 4: ncol(productionPlan1C))]
+
+
+# productionPlan1C<- productionPlan1C [complete.cases(productionPlan1C),]
+# write.table(productionPlan1C , "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/production plan 1С_4.csv", row.names = FALSE)
+# productionPlan1C<-read.table("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/production plan 1С_4.csv", blank.lines.skip = TRUE)
+
+
+# colnames(productionPlan1C)<- c ("code", "item", c (3:ncol(productionPlan1C)))
+ colnames(productionPlan1C)[1:2]<- c ("code", "item")
+
+fullRangeProdPlan<-merge(monthlyProductionPlanMSK [,c(1,2)], productionPlan1C, by ="code", all.x= TRUE)
+
+#преобразовываем коды в цифровой формат
+fullRangeProdPlan [,1]<-   as.numeric(fullRangeProdPlan[,1])
+
+#ранжируем в убывающем порядке
+fullRangeProdPlan<-fullRangeProdPlan[order(fullRangeProdPlan[,1]),] 
+fullRangeProdPlan<- fullRangeProdPlan [,c (1,2, 4:ncol(fullRangeProdPlan))]
