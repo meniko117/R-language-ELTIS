@@ -747,6 +747,7 @@ write.csv(reportNSK, "C:/Documents and Settings/smirnov/Мои документ�
 
 
 library (lubridate)
+library (stringr)
 #РґР°С‚С‹ РЅР°С‡Р°Р»Р° РєР°Р¶РґРѕР№ РЅРµРґРµР»Рё
 weekBegin<- data.frame(matrix(nrow=1, ncol=52))
 #weekBegin[1]<-as.Date(strptime("01.01.2015", format = "%d.%m.%Y"))
@@ -991,3 +992,40 @@ fullRangeProdPlan [,1]<-   as.numeric(fullRangeProdPlan[,1])
 #ранжируем в убывающем порядке
 fullRangeProdPlan<-fullRangeProdPlan[order(fullRangeProdPlan[,1]),] 
 fullRangeProdPlan<- fullRangeProdPlan [,c (1,2, 4:ncol(fullRangeProdPlan))]
+
+fullRangeProdPlan[is.na(fullRangeProdPlan)]<-0
+
+#парсинг дат из заголовков стоблцов
+namesDates<- names(fullRangeProdPlan)[3:ncol(fullRangeProdPlan)-1]
+
+colnames(fullRangeProdPlan)[3:ncol(fullRangeProdPlan)-1]<- str_sub(namesDates, start= -10)
+
+# 
+# 
+# создать "заготовку" по плановому приходу товара в каждый из филиалов
+# для Москвы
+
+arrivalPlanMSK<- totalProductiontime
+arrivalPlanMSK [4:nrow(arrivalPlanMSK), 3:ncol(arrivalPlanMSK)]<- 0
+
+#определение "номера" столбца из которого будут взяты данные по допзаказам
+# первые 5 столбцов текущего месяца - Москва, затем 5 стоблцов - СПб, затем 5 столбцов НСК
+as.numeric(str_sub(colnames(fullRangeProdPlan) [3], end =2))
+
+#опрделяем текущий номер недели "внутри" месяца
+weekNumberMonth<- as.numeric(arrivalPlanMSK [  3, match (weekReport, colnames(arrivalPlanMSK) )])
+
+# проходим номера недель, начиная с текущей и присваиваем величину допзаказов
+# начиная с номера текущей недели внутри месяца
+
+#определеяем номер колонки, с которой начинается текущий месяц
+startCurrentMonth<-match(month(Sys.Date()), arrivalPlanMSK [1,])
+
+for (i in weekNumberMonth :5 ) {
+  for (d in 4:nrow(arrivalPlanMSK)) {
+    
+  arrivalPlanMSK[d, i+startCurrentMonth-1] <- fullRangeProdPlan[d-3, i+2]
+  
+  }
+}
+  
