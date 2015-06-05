@@ -951,12 +951,17 @@ partMSK <- monthlyProductionPlanMSK[ , 3:14]/ monthlyProductionPlan[ , 3:14]
 partSPb <- monthlyProductionPlanSPb[ , 3:14]/ monthlyProductionPlan[ , 3:14]
 partNSK <- monthlyProductionPlanNSK[ , 3:14]/ monthlyProductionPlan[ , 3:14]
 
+# присваиваем названиям колонок номера месяцев
+colnames (partMSK) <- c(1:12)
+colnames (partSPb) <- c(1:12)
+colnames (partNSK) <- c(1:12)
 
 
 
-
-
-
+#заменяем значения NaN на ноль в таблице в долями
+partMSK <- replace(partMSK, is.na(partMSK), 0)
+partSPb <- replace(partSPb, is.na(partSPb), 0)
+partNSK <- replace(partNSK, is.na(partNSK), 0)
 
 
 
@@ -1021,6 +1026,7 @@ weekNumberMonth<- as.numeric(arrivalPlanMSK [  3, match (weekReport, colnames(ar
 #определеяем номер колонки, с которой начинается текущий месяц
 startCurrentMonth<-match(month(Sys.Date()), arrivalPlanMSK [1,])
 
+# проставляем допзаказы на соответствующие недели
 for (i in weekNumberMonth :5 ) {
   for (d in 4:nrow(arrivalPlanMSK)) {
     
@@ -1029,3 +1035,45 @@ for (i in weekNumberMonth :5 ) {
   }
 }
   
+
+# 
+# на основе плана производства на месяц, долей распределения по филиалам, формируем план поставок в каждый филиал
+# 
+# 
+
+
+
+# поиск колонки в общем плане производства, где содержится план на текущий месяц
+monthDigit<- ifelse(month(Sys.Date())<10, paste(0, month(Sys.Date()), sep = "" ), month(Sys.Date())  )
+dateHeader<- paste(28,monthDigit, year(Sys.Date()), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+
+
+
+#номера колонок, относящихся к текущему месяцу
+colMonth<- grep (month(Sys.Date()), arrivalPlanMSK[1,])
+
+# получем плановый понедлеьный приход на текущий месяц с учетом допзаказов (первое слагаемое); 
+# преобразовываем в цифровой формат 
+arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)]<- round(data.matrix(arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)], rownames.force = NA)+  
+# умножаем план на текущий месяц на доли и делим на количество недель в месяце
+(fullRangeProdPlan[ , colNumberProduction] * partMSK [ , month(Sys.Date())])/ length(colMonth))
+
+
+
+# поиск колонки в общем плане производства, где содержится план на месяц СЛЕДУЮЩИЙ за текущим
+monthDigit<- ifelse(month(Sys.Date())<10, paste(0, month(Sys.Date())+1, sep = "" ), month(Sys.Date())  )
+dateHeader<- paste(28,monthDigit, year(Sys.Date()), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+
+#номера колонок, относящихся к текущему месяцу слеюущему за текущим
+colMonth<- grep (month(Sys.Date())+1, arrivalPlanMSK[1,])
+
+
+arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)]<- round(data.matrix(arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)], rownames.force = NA)+  
+                                                               # умножаем план на текущий месяц на доли и делим на количество недель в месяце
+                                                               (fullRangeProdPlan[ , colNumberProduction] * partMSK [ , month(Sys.Date())+1])/ length(colMonth))
+
+# 
+# добавить расчет еще одного месяца для получения плана на 3 месяца
+# 
