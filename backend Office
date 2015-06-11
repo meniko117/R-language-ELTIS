@@ -203,11 +203,12 @@ for (m in 2:nr)
 
 code<-regexpr(']',rat[,5])
 rat$code<-substr(rat[,5], 2, code-1)
-rat$orderDate<-str_sub(rat[,8], start= -8)
+rat$orderDate<-str_sub(rat[,2], start= -8)
 
 rat$orderWeek<-round(as.numeric(
   difftime(strptime(rat$orderDate, format = "%d.%m.%y"),
            strptime("01.01.2015", format = "%d.%m.%Y"), units="weeks") +1), digits=0)
+#rat[is.na(rat)]<-0
 
 wTable<-subset(rat, select=c( 15, 5,  17, 14))
 
@@ -251,8 +252,8 @@ difnames2<-paste(nam, ".y", sep ="")
 
 len<-length(nam) # 
 
-colindex<-match(difnames,nam2)[4:len-2] # поиск номеров колонок в 52-недельной матрице, совмещенной с матрице заказов, которые совпали с матрицей заказов
-colindex2<-match(difnames2,nam2)[4:len-2] # поиск немеров колонок в матрице заказов, которые совпали неделями заказов
+colindex<-match(difnames,nam2)[3:len-2] # поиск номеров колонок в 52-недельной матрице, совмещенной с матрицей заказов, которые совпали с матрицей заказов
+colindex2<-match(difnames2,nam2)[3:len-2] # поиск немеров колонок в матрице заказов, которые совпали неделями заказов
 
 
 
@@ -308,7 +309,10 @@ weeklySales2<- weeklySales2[,1:54]
 # 
 # 
 # 
-componentsConsumption<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/components consumption.xls")
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/потребление компонентов мес ", month(Sys.Date()), ".xls", sep="")
+
+
+componentsConsumption<-read_excel(mu)
 componentsConsumption<- componentsConsumption [, c(2,4,match("Требуется в изделия", componentsConsumption[2, ]))]
 colnames(componentsConsumption) <- c("code", "item", "q-ty")
 componentsConsumption <- componentsConsumption [3:nrow(componentsConsumption), ]
@@ -331,7 +335,10 @@ weeklySales2 [ ,colMonth ]<- round(componentsConsumption [ ,3] /length(colMonth)
 # weeklysales формируем из файла из 1С потребление ПКИ на СЛЕДУЮЩИЙ месяц
 #
 
-componentsConsumption<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/components consumption.xls")
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/потребление компонентов мес ", month(Sys.Date())+1, ".xls", sep="")
+componentsConsumption<-read_excel(mu)
+
+
 componentsConsumption<- componentsConsumption [, c(2,4,match("Требуется в изделия", componentsConsumption[2, ]))]
 colnames(componentsConsumption) <- c("code", "item", "q-ty")
 componentsConsumption <- componentsConsumption [3:nrow(componentsConsumption), ]
@@ -354,7 +361,10 @@ weeklySales2 [ ,colMonth ]<- round(componentsConsumption [ ,3] /length(colMonth)
 # weeklysales формируем из файла из 1С потребление ПКИ ЧЕРЕЗ 2 месяца
 #
 
-componentsConsumption<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/components consumption.xls")
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/потребление компонентов мес ", month(Sys.Date())+2, ".xls", sep="")
+componentsConsumption<-read_excel(mu)
+
+
 componentsConsumption<- componentsConsumption [, c(2,4,match("Требуется в изделия", componentsConsumption[2, ]))]
 colnames(componentsConsumption) <- c("code", "item", "q-ty")
 componentsConsumption <- componentsConsumption [3:nrow(componentsConsumption), ]
@@ -577,6 +587,40 @@ write.csv(report, "C:/Documents and Settings/smirnov/Мои документы/�
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##Получаем остатки для Московского склада
 ##получить номер колонки заданного склада
 ##
@@ -637,6 +681,100 @@ colnames(weeklyStockMoscow)[3:54] <- c (1:52)
 
 #загружаем параметры товародвижения (страх. запас, размер заказа и проч), а также план продаж
 salesMoscow<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Moscow sales and parameters.xls")
+
+
+
+
+
+
+
+
+##
+##
+##
+##
+## загрузка плана продаж Москвы и шаблона 1С, а не из файла
+
+
+# загрузка плана продаж на ТЕКУЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/план продаж МСК-", month(Sys.Date()), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesMoscow<- merge(salesMoscow, t, by ="code", all.x= TRUE)
+salesMoscow[is.na(salesMoscow)]<-0
+
+
+#номера колонок, относящихся к ТЕКУЩЕМУ месяцу
+colMonth<- grep (month(Sys.Date()), alltimeHeader[1,])
+# присваиваем потребляемые количества соответствущим неделям ТЕКУЩЕГО месяца
+salesMoscow [ ,colMonth+3 ]<- round(salesMoscow [ ,59] /length(colMonth))
+salesMoscow <- salesMoscow [ ,1:57]
+
+
+
+
+# загрузка плана продаж на СЛЕДУЮЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/план продаж МСК-", month(Sys.Date())+1, ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesMoscow<- merge(salesMoscow, t, by ="code", all.x= TRUE)
+salesMoscow[is.na(salesMoscow)]<-0
+
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- grep (month(Sys.Date())+1, alltimeHeader[1,])
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesMoscow [ ,colMonth+3 ]<- round(salesMoscow [ ,59] /length(colMonth))
+salesMoscow <- salesMoscow [ ,1:57]
+
+
+
+
+
+
+# загрузка плана продаж через 2 месяца
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/план продаж МСК-", month(Sys.Date())+2, ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesMoscow<- merge(salesMoscow, t, by ="code", all.x= TRUE)
+salesMoscow[is.na(salesMoscow)]<-0
+
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- grep (month(Sys.Date())+2, alltimeHeader[1,])
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesMoscow [ ,colMonth+3 ]<- round(salesMoscow [ ,59] /length(colMonth))
+salesMoscow <- salesMoscow [ ,1:57]
+
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+#
+
+
+
 paramMoscow<- salesMoscow [ ,c (2,1, 4, 5, 3)]
 
 colnames(paramMoscow) <- c("code", "item", "safety stock", "order q-ty", "lead time")
@@ -649,6 +787,10 @@ colnames(salesMoscow) [3:54]<- c("1":"52")
 paramMoscow<-merge(currentFinishedStock, paramMoscow, by ="code", all.x= TRUE)
 salesMoscow<-merge(currentFinishedStock, salesMoscow, by ="code", all.x= TRUE)
 salesMoscow[is.na(salesMoscow)]<-0
+
+
+
+
 
 
 
@@ -743,6 +885,98 @@ colnames(weeklyStockSPb)[3:54] <- c (1:52)
 
 #загружаем параметры товародвижения (страх. запас, размер заказа и проч), а также план продаж
 salesSPb<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/SPb sales and parameters.xls")
+
+
+
+
+
+
+
+
+##
+##
+##
+##
+## загрузка плана продаж Санкт-Петербурга и шаблона 1С, а не из файла
+
+
+# загрузка плана продаж на ТЕКУЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/план продаж СПб-", month(Sys.Date()), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesSPb<- merge(salesSPb, t, by ="code", all.x= TRUE)
+salesSPb[is.na(salesSPb)]<-0
+salesSPb <- salesSPb [ ,1:57]
+
+
+#номера колонок, относящихся к ТЕКУЩЕМУ месяцу
+colMonth<- grep (month(Sys.Date()), alltimeHeader[1,])
+# присваиваем потребляемые количества соответствущим неделям ТЕКУЩЕГО месяца
+salesSPb [ ,colMonth+3 ]<- round(salesSPb [ ,59] /length(colMonth))
+
+
+
+
+
+# загрузка плана продаж на СЛЕДУЮЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/план продаж СПб-", month(Sys.Date())+1, ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesSPb<- merge(salesSPb, t, by ="code", all.x= TRUE)
+salesSPb[is.na(salesSPb)]<-0
+salesSPb <- salesSPb [ ,1:57]
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- grep (month(Sys.Date())+1, alltimeHeader[1,])
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesSPb [ ,colMonth+3 ]<- round(salesSPb [ ,59] /length(colMonth))
+
+
+
+
+
+
+
+# загрузка плана продаж через 2 месяца
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/план продаж СПб-", month(Sys.Date())+2, ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesMoscow<- merge(salesMoscow, t, by ="code", all.x= TRUE)
+salesMoscow[is.na(salesMoscow)]<-0
+salesSPb <- salesSPb [ ,1:57]
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- grep (month(Sys.Date())+2, alltimeHeader[1,])
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesMoscow [ ,colMonth+3 ]<- round(salesMoscow [ ,59] /length(colMonth))
+
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+#
+
 paramSPb<- salesSPb [ ,c (2,1, 4, 5, 3)]
 
 colnames(paramSPb) <- c("code", "item", "safety stock", "order q-ty", "lead time")
@@ -846,6 +1080,91 @@ colnames(weeklyStockNSK)[3:54] <- c (1:52)
 
 #загружаем параметры товародвижения (страх. запас, размер заказа и проч), а также план продаж
 salesNSK<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/NSK sales and parameters.xls")
+
+
+##
+##
+##
+##
+## загрузка плана продаж Новосибирска и шаблона 1С, а не из файла
+
+
+# загрузка плана продаж на ТЕКУЩИЙ месяц
+
+
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesNSK<- merge(salesNSK, t, by ="code", all.x= TRUE)
+salesNSK[is.na(salesNSK)]<-0
+salesNSK <- salesNSK [ ,1:57]
+
+
+#номера колонок, относящихся к ТЕКУЩЕМУ месяцу
+colMonth<- grep (month(Sys.Date()), alltimeHeader[1,])
+# присваиваем потребляемые количества соответствущим неделям ТЕКУЩЕГО месяца
+salesNSK [ ,colMonth+3 ]<- round(salesNSK [ ,59] /length(colMonth))
+
+
+
+
+
+# загрузка плана продаж на СЛЕДУЮЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/план продаж НСК-", month(Sys.Date())+1, ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesNSK<- merge(salesNSK, t, by ="code", all.x= TRUE)
+salesNSK[is.na(salesNSK)]<-0
+salesNSK <- salesNSK [ ,1:57]
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- grep (month(Sys.Date())+1, alltimeHeader[1,])
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesNSK [ ,colMonth+3 ]<- round(salesNSK [ ,59] /length(colMonth))
+
+
+
+
+
+
+
+# загрузка плана продаж через 2 месяца
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/план продаж НСК-", month(Sys.Date())+2, ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesNSK<- merge(salesNSK, t, by ="code", all.x= TRUE)
+salesNSK[is.na(salesNSK)]<-0
+salesNSK <- salesNSK [ ,1:57]
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- grep (month(Sys.Date())+2, alltimeHeader[1,])
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesNSK [ ,colMonth+3 ]<- round(salesNSK [ ,59] /length(colMonth))
+
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+#
+
 paramNSK<- salesNSK [ ,c (2,1, 4, 5, 3)]
 
 colnames(paramNSK) <- c("code", "item", "safety stock", "order q-ty", "lead time")
@@ -898,6 +1217,28 @@ write.csv(reportNSK, "C:/Documents and Settings/smirnov/Мои документ�
 ##
 totalProduction <- reportMSK[(nrow(flowMSK)/3+1):(nrow(flowMSK)/3*2), c(4:55)] + reportSPb[(nrow(flowSPb)/3+1):(nrow(flowSPb)/3*2), c(4:55)]+reportNSK[(nrow(flowNSK)/3+1):(nrow(flowNSK)/3*2), c(4:55)]
 totalProduction<- cbind(reportMSK[c(1: (nrow(flowMSK)/3)), c(1,2) ], totalProduction)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1505,13 +1846,6 @@ colMonth<- grep (month(Sys.Date())+2, arrivalPlanNSK[1,])
 arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)]<- round(data.matrix(arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)], rownames.force = NA)+  
                                                                # умножаем план на текущий месяц на доли и делим на количество недель в месяце
                                                                (fullRangeProdPlan[ , colNumberProduction] * partNSK [ , month(Sys.Date())+2])/ length(colMonth))
-
-
-
-
-
-
-
 
 
 
