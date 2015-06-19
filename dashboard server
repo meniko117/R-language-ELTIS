@@ -4,8 +4,13 @@ library(shiny)
 library(googleVis)
 
 shinyServer(function(input, output) {
-  diamonds<- read.csv ("components5.csv")
-  MSKdeliver<-read.csv ("MSK deliver.csv")
+  diamonds<- read.csv ("report.csv")
+  MSKdeliver<-read.csv ("arrivalPlanMSK.csv")
+  SPbdeliver<-read.csv ("arrivalPlanSPb.csv")
+  NSKdeliver<-read.csv ("arrivalPlanNSK.csv")
+  OrdersFilter<- read.csv ("OrdersFilter.csv")
+  ProductionPlan<- read.csv ("monthlyProductionPlan.csv")
+  
   topstock<-read.csv ("top stock.csv")
   actselling<-read.csv ("actual_selling.csv")
   
@@ -13,26 +18,30 @@ shinyServer(function(input, output) {
   
   # a large table, reative to input$show_vars
   output$mytable1 <- renderDataTable({
-    #library(ggplot2)
-    diamonds [, input$show_vars, drop = FALSE]
-  })
+     diamonds [, input$show_vars, drop = FALSE]
+  }) #options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+    #[, input$show_vars, drop = FALSE]
+ 
   
   # sorted columns are colored now because CSS are attached to them
   output$mytable2 <- renderDataTable({
-    MSKdeliver
-  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+    SPbdeliver
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
   
   # customize the length drop-down menu; display 5 rows per page by default
   output$mytable3 <- renderDataTable({
-    MSKdeliver
-  }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5))
+    NSKdeliver
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+    # либо =list(lengthMenu = c(5, 30, 50), pageLength = 5))
   
   
   output$mytable4 <- renderDataTable({
     MSKdeliver
-  }, options = list(lengthMenu = c(5, 30, 50), pageLength = 50))
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+    #list(lengthMenu = c(5, 30, 50), pageLength = 50))
   
   
+
   
   output$mytable5 <- renderDataTable({
     topstock
@@ -50,8 +59,17 @@ shinyServer(function(input, output) {
   
   
   
+  output$mytable7 <- renderDataTable({
+    OrdersFilter
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
   
   
+  
+  
+  
+  output$mytable8 <- renderDataTable({
+    ProductionPlan
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
   
   
   
@@ -149,7 +167,7 @@ shinyServer(function(input, output) {
     
     
     
-    ))
+  ))
   output$vertSales <- renderGvis(gvisColumnChart(df))
   output$lineSales <- renderGvis(gvisLineChart(df))
   
@@ -244,7 +262,7 @@ shinyServer(function(input, output) {
     gvisPieChart(
       
       
-  #вместо mat    
+      #вместо mat    
       
       data.frame(party=c("400 видео", "300 аудио", "трубки", "мониторы",
                          "5000", "mifare"),
@@ -253,22 +271,22 @@ shinyServer(function(input, output) {
       
       
       , 
-                 options=list(
-                   width=450,
-                   height=400,
-                   slices="{0: {offset: 0.2},
-                   1: {offset: 0.2},
-                   2: {offset: 0.2},
-                   3: {offset: 0.5}}",
-                   
-                   
-                   #                 title='Доли ассортимента в обороте 1-й квартал 2015',
-                   legend='none',
-                   colors="['#6b38d2','orange', 'blue', 
-                   'red', 'purple', 'green']",
-                   pieSliceText='label',
-                   pieHole=0.5, is3D= 'true'),
-                 chartid="doughnut"))
+      options=list(
+        width=450,
+        height=400,
+        slices="{0: {offset: 0.2},
+        1: {offset: 0.2},
+        2: {offset: 0.2},
+        3: {offset: 0.5}}",
+        
+        
+        #                 title='Доли ассортимента в обороте 1-й квартал 2015',
+        legend='none',
+        colors="['#6b38d2','orange', 'blue', 
+        'red', 'purple', 'green']",
+        pieSliceText='label',
+        pieHole=0.5, is3D= 'true'),
+      chartid="doughnut"))
   
   
   
