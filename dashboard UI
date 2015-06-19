@@ -6,7 +6,7 @@ library(shinydashboard)
 
 
 
-diamonds<- read.csv ("components5.csv")
+diamonds<- read.csv ("report.csv")
 #components<-read.csv("components5.csv")
 colnames <- names(diamonds) #вектор названий колонок
 
@@ -88,13 +88,13 @@ ui <- dashboardPage( skin = "blue",
                        
                        sliderInput("freq",
                                    "Периодов в выборке, мес:",
-                                   min = 1,  max = 50, value = 6),
+                                   min = 1,  max = 50, value = 6) ,
                        
-                       conditionalPanel(
-                         'input.dataset === "diamonds"', 
-                         checkboxGroupInput('show_vars', 'Показывать колонки:',
-                                            names(diamonds), selected = colnames[3:15])
-                       ),
+                      conditionalPanel(
+                        'input.dataset === "diamonds"', 
+                        checkboxGroupInput('show_vars', 'Показывать колонки:',
+                                           names(diamonds), selected = colnames[2:15])
+                      ),
                        conditionalPanel(        
                          'input.dataset === "diamonds"',
                          helpText('Click the column header to sort a column.')
@@ -198,7 +198,7 @@ ui <- dashboardPage( skin = "blue",
                                                collapsible = TRUE))
                                   ),
                                   
-                                 
+                                  
                                   
                                   
                                   
@@ -210,17 +210,17 @@ ui <- dashboardPage( skin = "blue",
                                   
                                   
                                   fluidRow(
-                                  column(6,
-                                         box(title = "Структура ОС в запасах, руб", width=12,  status = "warning", htmlOutput("lineSales"),  solidHeader = TRUE,
-                                             collapsible = TRUE)),
-                                  #htmlOutput("lineSales", width = "600px", height = "600px"), 
-                                  
-                                  
-                                  
-                                  
-                                  column(6,
-                                  box(title = "Потенциал упущенной выгоды из-за товарного дефицита, руб", width=12,  status = "warning", htmlOutput("coolbars"),  solidHeader = TRUE,
-                                      collapsible = TRUE))
+                                    column(6,
+                                           box(title = "Структура ОС в запасах, руб", width=12,  status = "warning", htmlOutput("lineSales"),  solidHeader = TRUE,
+                                               collapsible = TRUE)),
+                                    #htmlOutput("lineSales", width = "600px", height = "600px"), 
+                                    
+                                    
+                                    
+                                    
+                                    column(6,
+                                           box(title = "Потенциал упущенной выгоды из-за товарного дефицита, руб", width=12,  status = "warning", htmlOutput("coolbars"),  solidHeader = TRUE,
+                                               collapsible = TRUE))
                                   ),
                                   #htmlOutput("coolbars", width = "600px", height = "600px"), 
                                   
@@ -295,7 +295,13 @@ ui <- dashboardPage( skin = "blue",
                                              
                                              value = 'diamonds', 
                                              
-                                             h4("Распределение средств в запасах ПКИ"),
+                                             h4("План закупок ПКИ на билжайшие 4 недели"),
+                                             dataTableOutput('mytable7'),
+                                             br(),
+                                             br(),
+                                             br(),
+                                             
+                                             h4("Рассчтеный план закупок ПКИ до конца года, включая информацию по размещенным допзаказам (в пути)" ),
                                              br(),
                                              dataTableOutput('mytable1')
                                              
@@ -320,23 +326,38 @@ ui <- dashboardPage( skin = "blue",
                                     id = 'dataset',
                                     tabPanel('Москва', 
                                              
-                                             h4("Распределение средств в запасах ПКИ"),
-                                             br(),
-                                             br(),
-                                             br(),
+                                             h4("Плановые приходы в ближайшие недели, начиная с текущей (понедельно)"),
+                                             h4("Информация из 1С на основе подписанных планов и зарегистированных допзаказов"),
                                              dataTableOutput('mytable4')),
                                     
-                                    tabPanel('Санкт-Петербург', dataTableOutput('mytable2')),
-                                    tabPanel('Новосибирск', dataTableOutput('mytable3')), 
-                                    tabPanel('Диаграммы', plotOutput("plot1"),
+                                    tabPanel('Санкт-Петербург', 
+                                             h4("Плановые приходы в ближайшие недели, начиная с текущей (понедельно)"),
+                                             h4("Информация из 1С на основе подписанных планов и зарегистированных допзаказов"),
+                                             dataTableOutput('mytable2')),
+                                    
+                                    tabPanel('Новосибирск', 
+                                             h4("Плановые приходы в ближайшие недели, начиная с текущей (понедельно)"),
+                                             h4("Информация из 1С на основе подписанных планов и зарегистированных допзаказов"),
+                                             dataTableOutput('mytable3')), 
+                                    
+                                    tabPanel('Рассчетный выпуск ГП', 
                                              
-                                             fluidRow( column(4,
-                                                              plotOutput("plot2")),
-                                                       
-                                                       column(4, offset = 4,
-                                                              plotOutput("plot3")
-                                                       )      
-                                             ))
+                                             h4("Ежедневно изменяющийся план производства ГП в зависимости от темпа продаж"),
+                                             br(),
+                                             br(),
+                                             dataTableOutput('mytable8')
+#                                              plotOutput("plot1"),
+#                                              
+#                                              fluidRow( column(4,
+#                                                               plotOutput("plot2")),
+#                                                        
+#                                                        column(4, offset = 4,
+#                                                               plotOutput("plot3")
+#                                                        )      
+#                                              )
+                                             
+                                             
+                                             )
                                     
                                     
                                   ))
