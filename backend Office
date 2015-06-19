@@ -329,6 +329,10 @@ componentsConsumption[is.na(componentsConsumption)]<-0
 
 #номера колонок, относящихся к текущему месяцу
 colMonth<- grep (month(Sys.Date()), alltimeHeader[1,])
+
+#номера колонок текущего месяца, начиная с текущей недели и до конца месяца !!
+colMonth<- c((weekReport+2):max(colMonth))
+
 # присваиваем потребляемые количества соответствущим неделям ТЕКУЩЕГО месяца
 weeklySales2 [ ,colMonth ]<- round(componentsConsumption [ ,3] /length(colMonth))
 
@@ -558,9 +562,49 @@ statusMatrix[nrow(rat)/3+2:nrow(rat)/3*2, ]<-"заказы"
 statusMatrix[(nrow(rat)/3*2+1):nrow(rat), ]<- "в пути"
 
 
-
 report<-cbind(NamesMatrix,statusMatrix, rat)
+
+# отбор колонок, начиная с текущей недели и до конца года
+report<-  report[ , c(1,2, 3, (weekReport+3):ncol(report))]
 write.csv(report, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/report.csv")
+
+# 
+report$sum<- rowSums (report [, 4:8]) 
+reportOrders<-report  [ (nrow(rat)/3+2) :(nrow(rat)/3*2), ]
+
+
+# library(dplyr)    
+# reportOrdersFilter<- filter(reportOrders, sum > 1)
+
+reportOrdersFilter <- subset(reportOrders, sum > 1)
+write.csv(reportOrdersFilter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/OrdersFilter.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1227,30 +1271,6 @@ write.csv(totalProduction, "C:/Documents and Settings/smirnov/Мои докум�
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #
 #перенести получаемый "alltimeHeader" в "mergw tables"
 #
@@ -1619,6 +1639,8 @@ arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)]<- round(data.matrix(arrival
                                                                # умножаем план на текущий месяц на доли и делим на количество недель в месяце
                                                                (fullRangeProdPlan[ , colNumberProduction] * partMSK [ , month(Sys.Date())+2])/ length(colMonth))
 
+#делаем отбор от текущей недели и до конца года
+arrivalPlanMSK<- arrivalPlanMSK [ , c(1,2, (weekReport+2):ncol(arrivalPlanMSK))]
 write.csv(arrivalPlanMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/arrivalPlanMSK.csv")
 
 
@@ -1723,8 +1745,8 @@ colMonth<- grep (month(Sys.Date())+2, arrivalPlanSPb[1,])
 arrivalPlanSPb [4:nrow(arrivalPlanSPb), c(colMonth)]<- round(data.matrix(arrivalPlanSPb [4:nrow(arrivalPlanSPb), c(colMonth)], rownames.force = NA)+  
                                                                # умножаем план на текущий месяц на доли и делим на количество недель в месяце
                                                                (fullRangeProdPlan[ , colNumberProduction] * partSPb [ , month(Sys.Date())+2])/ length(colMonth))
-
-
+#делаем отбор от текущей недели и до конца года
+arrivalPlanSPb<- arrivalPlanSPb [ , c(1,2, (weekReport+2):ncol(arrivalPlanSPb))]
 write.csv(arrivalPlanSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/arrivalPlanSPb.csv")
 
 
@@ -1825,5 +1847,18 @@ arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)]<- round(data.matrix(arrival
                                                                # умножаем план на текущий месяц на доли и делим на количество недель в месяце
                                                                (fullRangeProdPlan[ , colNumberProduction] * partNSK [ , month(Sys.Date())+2])/ length(colMonth))
 
+#делаем отбор от текущей недели и до конца года
+arrivalPlanNSK<- arrivalPlanNSK [ , c(1,2, (weekReport+2):ncol(arrivalPlanNSK))]
 write.csv(arrivalPlanNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/arrivalPlanNSK.csv")
+
+# записываем все таблицы с ежемесячной ПЛАНОВОЙ потребностью в приходе ГП в каждый филиал и общем приходе
+write.csv(monthlyProductionPlan, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/monthlyProductionPlan.csv")
+write.csv(monthlyProductionPlanMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/monthlyProductionPlanMSK.csv")
+write.csv(monthlyProductionPlanSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/monthlyProductionPlanSPb.csv")
+write.csv(monthlyProductionPlanNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/monthlyProductionPlanNSK.csv")
+
+
+
+
+
 
