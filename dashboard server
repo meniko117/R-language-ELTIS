@@ -9,7 +9,14 @@ shinyServer(function(input, output) {
   SPbdeliver<-read.csv ("arrivalPlanSPb.csv")
   NSKdeliver<-read.csv ("arrivalPlanNSK.csv")
   OrdersFilter<- read.csv ("OrdersFilter.csv")
+  OrdersFilterWeek<- read.csv ("reportOrdersFilterWeek.csv")
   ProductionPlan<- read.csv ("monthlyProductionPlan.csv")
+  
+  
+  MSKreport<-read.csv ("reportMSK.csv")
+  SPbreport<-read.csv ("reportSPb.csv")
+  NSKreport<-read.csv ("reportNSK.csv")
+  
   
   topstock<-read.csv ("top stock.csv")
   actselling<-read.csv ("actual_selling.csv")
@@ -19,8 +26,9 @@ shinyServer(function(input, output) {
   # a large table, reative to input$show_vars
   output$mytable1 <- renderDataTable({
      diamonds [, input$show_vars, drop = FALSE]
-  }) #options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
-    #[, input$show_vars, drop = FALSE]
+  }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  #list(lengthMenu = c(5, 30, 50), pageLength = 5)
+  #[, input$show_vars, drop = FALSE]
  
   
   # sorted columns are colored now because CSS are attached to them
@@ -61,10 +69,10 @@ shinyServer(function(input, output) {
   
   output$mytable7 <- renderDataTable({
     OrdersFilter
-  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
   
   
-  
+  #list(orderClasses = TRUE, scrollY = '600px', paging = FALSE ))
   
   
   output$mytable8 <- renderDataTable({
@@ -74,11 +82,30 @@ shinyServer(function(input, output) {
   
   
   
+  output$mytable9 <- renderDataTable({
+    MSKreport
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
   
   
   
+  output$mytable10 <- renderDataTable({
+    SPbreport
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
   
   
+  
+  output$mytable11 <- renderDataTable({
+    NSKreport
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  
+  output$mytable12 <- renderDataTable({
+    OrdersFilterWeek
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+
   
   
   
