@@ -322,9 +322,12 @@ mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Макс
 
 componentsConsumption<-read_excel(mu)
 componentsConsumption<- componentsConsumption [, c(2,4,match("Требуется в изделия", componentsConsumption[2, ]))]
-colnames(componentsConsumption) <- c("code", "item", "q-ty")
+colnames(componentsConsumption) <- c("code", "item", "quantity")
 componentsConsumption <- componentsConsumption [3:nrow(componentsConsumption), ]
 componentsConsumption [ ,3] <- round(as.numeric(componentsConsumption [ ,3]))
+
+# сохранить оригинал потребления на текущий месяц
+write.csv(componentsConsumption, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/потребление ПКИ 1.csv" )
 
 
 componentsConsumption<- merge (weeklySales2[,1:2], componentsConsumption, by ="code", all.x= TRUE) [ , c(1,2,4)]
@@ -352,10 +355,14 @@ componentsConsumption<-read_excel(mu)
 
 
 componentsConsumption<- componentsConsumption [, c(2,4,match("Требуется в изделия", componentsConsumption[2, ]))]
-colnames(componentsConsumption) <- c("code", "item", "q-ty")
+colnames(componentsConsumption) <- c("code", "item", "quantity")
 componentsConsumption <- componentsConsumption [3:nrow(componentsConsumption), ]
 componentsConsumption [ ,3] <- round(as.numeric(componentsConsumption [ ,3]))
 componentsConsumption [ ,1] <- round(as.numeric(componentsConsumption [ ,1]))
+
+# сохранить оригинал потребления на следующий месяц
+write.csv(componentsConsumption, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/потребление ПКИ 2.csv" )
+
 
 componentsConsumption<- merge (weeklySales2[,1:2], componentsConsumption, by ="code", all.x= TRUE) [ , c(1,2,4)]
 componentsConsumption[is.na(componentsConsumption)]<-0
@@ -378,10 +385,15 @@ componentsConsumption<-read_excel(mu)
 
 
 componentsConsumption<- componentsConsumption [, c(2,4,match("Требуется в изделия", componentsConsumption[2, ]))]
-colnames(componentsConsumption) <- c("code", "item", "q-ty")
+colnames(componentsConsumption) <- c("code", "item", "quantity")
 componentsConsumption <- componentsConsumption [3:nrow(componentsConsumption), ]
 componentsConsumption [ ,3] <- round(as.numeric(componentsConsumption [ ,3]))
 componentsConsumption [ ,1] <- round(as.numeric(componentsConsumption [ ,1]))
+
+
+# сохранить оригинал потребления через 2 месяца
+write.csv(componentsConsumption, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/потребление ПКИ 3.csv" )
+
 
 componentsConsumption<- merge (weeklySales2[,1:2], componentsConsumption, by ="code", all.x= TRUE) [ , c(1,2,4)]
 componentsConsumption[is.na(componentsConsumption)]<-0
@@ -562,7 +574,7 @@ NamesMatrix<- weeklyStock[rep(row.names(weeklyStock), 3), 1:2]
 
 statusMatrix<-as.data.frame(matrix(nrow=nrow(rat), ncol=1))
 statusMatrix[1:nrow(rat)/3, ]<-"остатки"
-statusMatrix[nrow(rat)/3+2:nrow(rat)/3*2, ]<-"заказы"
+statusMatrix[nrow(rat)/3+2:nrow(rat)/3*2, ]<-"заказать"
 statusMatrix[(nrow(rat)/3*2+1):nrow(rat), ]<- "в пути"
 
 
@@ -598,6 +610,20 @@ row.names(reportOrdersFilterWeek) <- NULL
 write.csv(report, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/report.csv")
 write.csv(reportOrdersFilter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/OrdersFilter.csv")
 write.csv(reportOrdersFilterWeek, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/reportOrdersFilterWeek.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1015,6 +1041,7 @@ SalesMatrixSPb<-as.matrix(salesSPb[ ,56:107])
 ParametersMatrixSPb<-as.matrix(paramSPb[ ,c(56:58)])
 
 
+
 #расчет товаропотока для Москвы
 flowSPb<-round(stockTurnover(StockMatrixSPb,SalesMatrixSPb,OrdersMatrixSPb, ParametersMatrixSPb, time))
 
@@ -1233,6 +1260,33 @@ write.csv(reportNSK [, c(1,2,3, (weekReport+3) :ncol(reportNSK))], "C:/Documents
 totalProduction <- reportMSK[(nrow(flowMSK)/3+1):(nrow(flowMSK)/3*2), c(4:55)] + reportSPb[(nrow(flowSPb)/3+1):(nrow(flowSPb)/3*2), c(4:55)]+reportNSK[(nrow(flowNSK)/3+1):(nrow(flowNSK)/3*2), c(4:55)]
 totalProduction<- cbind(reportMSK[c(1: (nrow(flowMSK)/3)), c(1,2) ], totalProduction)
 write.csv(totalProduction, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/totalProduction.csv")
+
+
+#сохранить планы продаж как справочную информацию
+salesMoscow<- cbind (salesMoscow[ ,1:2], SalesMatrixMSK)
+salesMoscow [ ,3:ncol(salesMoscow)] <- round (salesMoscow [ ,3:ncol(salesMoscow)], digits=0)
+salesMoscow <- salesMoscow [ , c(1, 2, (weekReport+2):ncol(salesMoscow))]
+
+salesSPb<- cbind (salesSPb[ ,1:2], SalesMatrixSPb)
+salesSPb [ ,3:ncol(salesSPb)] <- round (salesSPb [ ,3:ncol(salesSPb)], digits=0)
+salesSPb <- salesSPb [ , c(1, 2, (weekReport+2):ncol(salesSPb))]
+
+salesNSK<- cbind (salesNSK[ ,1:2], SalesMatrixNSK)
+salesNSK [ ,3:ncol(salesNSK)] <- round (salesNSK [ ,3:ncol(salesNSK)], digits=0)
+salesNSK <- salesNSK [ , c(1, 2, (weekReport+2):ncol(salesNSK))]
+
+
+write.csv(salesMoscow, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/salesMoscow.csv")
+write.csv(salesSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/salesSPb.csv")
+write.csv(salesNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/salesNSK.csv")
+
+
+
+
+
+
+
+
 
 
 
@@ -1865,6 +1919,10 @@ write.csv(monthlyProductionPlanNSK, "C:/Documents and Settings/smirnov/Мои д
 
 
 
+# доли
+partMSK<- cbind(salesMoscow [ ,c (1:2)], round(partMSK, digits = 2))
+partSPb<- cbind(salesSPb [ ,c (1:2)], round(partSPb, digits = 2))
+partNSK<- cbind(salesNSK [ ,c (1:2)], round(partNSK, digits = 2))
 
-
-
+write.csv(partMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/partMSK.csv")
+write.csv(partSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/partSPb.csv")
