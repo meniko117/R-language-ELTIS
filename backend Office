@@ -218,6 +218,7 @@ rat$orderWeek<-round(as.numeric(
 
 wTable<-subset(rat, select=c( 15, 5,  17, 14))
 
+#as.numeric(wTable [ ,4])
 
 names(wTable)<-c("code", "item", "orderWeek", "quantity")
 
@@ -613,7 +614,46 @@ write.csv(reportOrdersFilterWeek, "C:/Documents and Settings/smirnov/Мои до
 
 
 
+# отчет по "излишкам" ОС, вложенных в запасы
+# загружаем данные по себестоимости
+extraStock<- read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/себестоимость.xls")
+extraStock<- extraStock [1:nrow(extraStock), c(2,3,ncol(extraStock))]
+colnames(extraStock)<- c("code", "name", "price")
+extraStock<- extraStock [4:nrow(extraStock), ]
 
+extraStock [,1]<- as.numeric (extraStock [,1])
+bg<-  report[1:(nrow(report)/3), c(1,2,4) ]
+
+extraMoney<-merge(bg, extraStock, by ="code", all.x= TRUE)
+extraMoney [ ,5]<- as.numeric(extraMoney[ ,5])
+
+extraMoney$Стоимость <- as.numeric(extraMoney[ ,3]) * extraMoney [ ,5]
+
+# 
+surplusConsumption <- read.csv ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/потребление ПКИ 2.csv" )
+
+extraMoney<-merge(extraMoney, surplusConsumption, by ="code", all.x= TRUE)
+extraMoney<- extraMoney [ , c(1,2,3,5,6,9)]
+extraMoney[is.na(extraMoney)]<-0.001
+colnames(extraMoney) <- c("code", "наименование", "остаток", "цена", "стоимость", "потребление" )
+extraMoney$остаток <- as.numeric(extraMoney$остаток)
+extraMoney$потребление <- as.numeric(extraMoney$потребление)
+
+extraMoney$оборачиваемость <- as.numeric(extraMoney$остаток)/ as.numeric(extraMoney$потребление)
+
+#стоимость запасов превышающих 2 месяца потребления
+extraMoney$излишек <- round((extraMoney$остаток- extraMoney$потребление * 2) * extraMoney$цена)
+
+  
+extraMoney<- extraMoney [order(-extraMoney$излишек),] 
+extraMoney[is.na(extraMoney)]<-0
+
+# выделяем только "реальные" излишки
+extraMoneyFlter <- subset(extraMoney, extraMoney$излишек > 0) 
+
+#общая сумма излишков
+sum(extraMoneyFlter$излишек)
+  
 
 
 
@@ -1321,16 +1361,6 @@ write.csv(salesNSK, "C:/Documents and Settings/smirnov/Мои документы
 
 
 
-
-
-
-
-
-
-
-
-
-
 #
 #перенести получаемый "alltimeHeader" в "mergw tables"
 #
@@ -1926,3 +1956,15 @@ partNSK<- cbind(salesNSK [ ,c (1:2)], round(partNSK, digits = 2))
 
 write.csv(partMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/partMSK.csv")
 write.csv(partSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/partSPb.csv")
+write.csv(partNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/partNSK.csv")
+
+# сводные доли на текущий месяц
+allParts<-cbind(salesMoscow [ ,c (1:2)], partMSK[ , month(Sys.Date())+2], partSPb[ , month(Sys.Date())+2,], partNSK[ , month(Sys.Date())+2])
+colnames(allParts)<- c("code", "item", "MSK", "SPB", "NSK")
+write.csv(allParts, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/allParts.csv")
+
+
+
+
+
+
