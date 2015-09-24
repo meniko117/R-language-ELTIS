@@ -12,14 +12,39 @@ shinyServer(function(input, output) {
   OrdersFilterWeek<- read.csv ("reportOrdersFilterWeek.csv")
   ProductionPlan<- read.csv ("monthlyProductionPlan.csv")
   
+  ComponentConsumption1 <- read.csv ("потребление ПКИ 1.csv")
+  ComponentConsumption2 <- read.csv ("потребление ПКИ 2.csv")
+  ComponentConsumption3 <- read.csv ("потребление ПКИ 3.csv")  
+  
+  stockFlowParameters <- read.csv ("stockFlowParameters.csv")  
   
   MSKreport<-read.csv ("reportMSK.csv")
   SPbreport<-read.csv ("reportSPb.csv")
   NSKreport<-read.csv ("reportNSK.csv")
   
   
+  salesMoscow<-read.csv ("salesMoscow.csv")
+  salesSPb<-read.csv ("salesSPb.csv")
+  salesNSK<-read.csv ("salesNSK.csv")
+  
+  allParts<-read.csv ("allParts.csv")
+  
+  extramoney<- read.csv ("extramoney.csv")
+  
+  
   topstock<-read.csv ("top stock.csv")
   actselling<-read.csv ("actual_selling.csv")
+  
+  budget<- read.csv ("budget.csv")
+  
+  deficitMSKFilter <- read.csv ("deficitMSKFilter.csv")
+  deficitSPbFilter <- read.csv ("deficitSPbFilter.csv")
+  deficitNSKFilter <- read.csv ("deficitNSKFilter.csv")
+  
+  surplusMSKFilter<-  read.csv ("surplusMSKFilter.csv")
+  surplusSPbFilter<-  read.csv ("surplusSPbFilter.csv")
+  surplusNSKFilter<-  read.csv ("surplusNSKFilter.csv")
+  
   
   #  components<-read.csv("components5.csv")
   
@@ -45,7 +70,7 @@ shinyServer(function(input, output) {
   
   output$mytable4 <- renderDataTable({
     MSKdeliver
-  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #добавили высоту таблицы и скролл вверх-вниз
     #list(lengthMenu = c(5, 30, 50), pageLength = 50))
   
   
@@ -84,7 +109,7 @@ shinyServer(function(input, output) {
   
   output$mytable9 <- renderDataTable({
     MSKreport
-  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #добавили высоту таблицы и скролл вверх-вниз
   
   
   
@@ -107,7 +132,94 @@ shinyServer(function(input, output) {
   
 
   
+  output$mytable13 <- renderDataTable({
+    ComponentConsumption1
+  }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #добавили высоту таблицы и скролл вверх-вниз
   
+ 
+  
+  
+  output$mytable14 <- renderDataTable({
+    ComponentConsumption2
+  },  options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  
+  output$mytable15 <- renderDataTable({
+    ComponentConsumption3
+  },  options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  
+  output$mytable16 <- renderDataTable({
+    stockFlowParameters
+  },  options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  output$mytable17 <- renderDataTable({
+    salesMoscow
+  }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  output$mytable18 <- renderDataTable({
+    salesSPb
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  output$mytable19 <- renderDataTable({
+    salesNSK
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  
+  output$mytable20 <- renderDataTable({
+    allParts
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  
+  
+  
+  output$mytable21 <- renderDataTable({
+    extramoney
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  
+  output$mytable22 <- renderDataTable({
+    budget
+  }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  
+  output$mytable23 <- renderDataTable({
+    deficitMSKFilter
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  output$mytable24 <- renderDataTable({
+    deficitSPbFilter
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  output$mytable25 <- renderDataTable({
+    deficitNSKFilter
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  
+  output$mytable26 <- renderDataTable({
+    surplusMSKFilter
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  output$mytable27 <- renderDataTable({
+    surplusSPbFilter
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  output$mytable28 <- renderDataTable({
+    surplusNSKFilter
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
   
   
   
