@@ -1,0 +1,1260 @@
+Year transition
+
+
+
+
+
+##
+##
+##
+##
+##
+##
+##
+##
+##
+##
+##
+##
+
+library (lubridate)
+
+
+#текущий год
+
+
+
+
+
+
+weekBegin<- data.frame(matrix(nrow=1, ncol=52))
+
+
+
+
+#номер дня недели (функция из lubridate) для текущего года
+# в строке ниже при смене года заменить на первое января наступающего года (в 2-х местах)
+
+
+firstMonday<- as.Date(strptime("01.01.2015", format = "%d.%m.%Y"))-(wday(as.Date(strptime("01.01.2015", format = "%d.%m.%Y")))-2)
+
+
+weekBegin[1]<-firstMonday
+
+
+
+
+for (i in 1:51 ) {
+  weekBegin[i+1] = weekBegin[i] +days(7)
+}
+
+
+
+
+#РЅРѕРјРµСЂ РјРµСЃСЏС†Р° РґР»СЏ РєР°Р¶РґРѕР№ РЅРµРґРµР»Рё
+monthBegin<- data.frame(matrix(nrow=1, ncol=52))
+for (i in 1:52 ) {
+  
+  monthBegin[1,i] <- month(as.POSIXlt(weekBegin[1,i], format="%d.%m.%Y"))
+}
+
+
+colnames(weekBegin)<-monthBegin[1,]
+
+
+row<-as.data.frame(matrix(nrow=1,ncol=52))
+row[is.na(row)]<-0
+
+
+
+
+
+
+weekBegin3<- rbind(weekBegin [ ,1], row)
+
+
+
+
+
+
+
+
+
+
+colnames (weekBegin3)<- colnames (weekBegin)
+
+
+weekBegin3 [2,1] <-1
+
+
+for (i in 2:52 ) {
+  ifelse ( colnames(weekBegin3)[i] == colnames(weekBegin3)[i-1], weekBegin3 [2,i]<- weekBegin3 [2,i-1]+1, weekBegin3 [2,i]<-1)
+  
+}
+
+
+
+
+
+
+for (i in 1:52 ) {
+  weekBegin3[1,i] <- as.character(weekBegin[1, i])
+}
+
+
+# для приведения размерности в соответствие
+twocolumns<-as.data.frame(matrix(nrow=2,ncol=2))
+
+
+alltimeHeader<- cbind(twocolumns, weekBegin3)
+
+
+#номера месяцев рассчитанных по дате понедельника
+monthnumber<-as.data.frame(matrix(nrow=1,ncol=54))
+monthnumber<-colnames(alltimeHeader)
+alltimeHeader<- rbind(monthnumber, alltimeHeader)
+
+
+colnames(alltimeHeader)<-c("code", "item.x", c(1:52))
+
+
+# 
+# получили "alltimeHeader" с указанием номера недели, номера месяца, даты понедельника, количества недель в месяце
+# 
+# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#следующий год
+weekBegin<- data.frame(matrix(nrow=1, ncol=52))
+
+
+
+
+#номер дня недели (функция из lubridate) для текущего года
+# в строке ниже при смене года заменить на первое января наступающего года (в 2-х местах)
+
+
+firstMonday<- as.Date(strptime("01.01.2016", format = "%d.%m.%Y"))-(wday(as.Date(strptime("01.01.2016", format = "%d.%m.%Y")))-2)
+
+
+weekBegin[1]<-firstMonday+7
+
+
+
+
+for (i in 1:51 ) {
+  weekBegin[i+1] = weekBegin[i] +days(7)
+}
+
+
+
+
+#РЅРѕРјРµСЂ РјРµСЃСЏС†Р° РґР»СЏ РєР°Р¶РґРѕР№ РЅРµРґРµР»Рё
+monthBegin<- data.frame(matrix(nrow=1, ncol=52))
+for (i in 1:52 ) {
+  
+  monthBegin[1,i] <- month(as.POSIXlt(weekBegin[1,i], format="%d.%m.%Y"))
+}
+
+
+colnames(weekBegin)<-monthBegin[1,]
+
+
+row<-as.data.frame(matrix(nrow=1,ncol=52))
+row[is.na(row)]<-0
+
+
+
+
+
+
+weekBegin3<- rbind(weekBegin [ ,1], row)
+
+
+
+
+
+
+
+
+
+
+colnames (weekBegin3)<- colnames (weekBegin)
+
+
+weekBegin3 [2,1] <-1
+
+
+for (i in 2:52 ) {
+  ifelse ( colnames(weekBegin3)[i] == colnames(weekBegin3)[i-1], weekBegin3 [2,i]<- weekBegin3 [2,i-1]+1, weekBegin3 [2,i]<-1)
+  
+}
+
+
+
+
+
+
+for (i in 1:52 ) {
+  weekBegin3[1,i] <- as.character(weekBegin[1, i])
+}
+
+
+# для приведения размерности в соответствие
+twocolumns<-as.data.frame(matrix(nrow=2,ncol=2))
+
+
+alltimeHeaderNextYear<- cbind(twocolumns, weekBegin3)
+
+
+#номера месяцев рассчитанных по дате понедельника
+monthnumber<-as.data.frame(matrix(nrow=1,ncol=54))
+monthnumber<-colnames(alltimeHeaderNextYear)
+alltimeHeaderNextYear<- rbind(monthnumber, alltimeHeaderNextYear)
+
+
+colnames(alltimeHeaderNextYear)<-c("code", "item.x", c(1:52))
+
+
+
+
+
+
+# 
+# получили "alltimeHeader" с указанием номера недели, номера месяца, даты понедельника, количества недель в месяце
+# 
+# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+alltimeHeader <- alltimeHeader[ ,3:ncol(alltimeHeader)]
+alltimeHeaderNextYear <- alltimeHeaderNextYear[ ,3:ncol(alltimeHeaderNextYear)]
+
+
+
+# БЛОК первоначальный
+# time <-45 #присваиваем номер недели для примера
+# num<-c (((time+2)-20):52, 1:((time+2)-21))
+# in1<-match(1,num)
+# #in52<-match(52,num)
+# num[1:(in1-1)]<-c((52-(in1-2)):52)
+# weeklist<-num[1:52]
+
+time <-45 #присваиваем номер недели для примера
+num<-c (((time+2)-25):52, 1:((time+2)-26))
+in1<-match(1,num)
+#in52<-match(52,num)
+num[1:(in1-1)]<-c((52-(in1-2)):52)
+weeklist<-num[1:52]
+
+
+
+#формируем "заготовку" в загловках колонок номера недель
+alltimeHeaderMix<- alltimeHeader #общий график на 2 года
+colnames(alltimeHeaderMix)<- c(weeklist)
+alltimeHeaderMix [ , ]<-0
+
+
+endYear<- ifelse(match(52,weeklist)>= match(time,weeklist),
+                 thisyear<-c(match(time,weeklist):match(52,weeklist)),
+                 thisyear<-c(match(time,weeklist):length(weeklist), c(1:match(52,weeklist))))
+
+
+#alltimeHeaderMix <- alltimeHeaderMix[ ,3:ncol(alltimeHeaderMix)]
+
+
+
+
+# end недели, относящиеся к текущему году
+# setdiff(num, end)  недели, относящиеся к следующему году
+# alltimeHeaderMix[ ,thisyear+2] <- alltimeHeader [ , names (alltimeHeaderMix) [thisyear+2]]
+# alltimeHeaderMix[ ,setdiff(as.numeric(names(alltimeHeaderMix)[3:ncol(alltimeHeaderMix)]), thisyear+2) ] <- alltimeHeaderNextYear [ , match(nextweeknum, colnames(alltimeHeaderNextYear))]
+
+
+#приравниваем значения к номерам недель ТЕКУЩЕГО года
+for (i in thisyear ) {
+  #номер недели определяем по номеру колонки
+  weeknum<-as.numeric(names (alltimeHeaderMix) [ i]) #+2
+  
+  alltimeHeaderMix [ ,i]<- alltimeHeader[ ,match(weeknum, names(alltimeHeader))] #
+}
+
+
+
+
+#номера колонок, которым надо присвоит значения следующего года
+nextcolnum <- setdiff(as.numeric(names(alltimeHeaderMix)), thisyear) #+2
+
+
+#приравниваем значения к номерам недель СЛЕДУЮЩЕГО года
+for (i in nextcolnum ) {
+  #номер недели определяем по номеру колонки
+  nextweeknum<-as.numeric(names(alltimeHeaderMix)[1:ncol(alltimeHeaderMix)][i])
+  
+  alltimeHeaderMix [ ,i]<- alltimeHeaderNextYear[ ,match(nextweeknum, names(alltimeHeaderNextYear))] #
+}
+
+
+
+
+
+alltimeHeader <- alltimeHeaderMix
+
+# OrdersMatrix2 <- OrdersMatrix
+# SalesMatrix2 <- SalesMatrix
+# StockMatrix2 <- StockMatrix
+# colnames(alltimeHeaderMix)
+# 
+# #присваиваем значения в новой структуре номеров недель
+# for (i in 1:ncol(OrdersMatrix)) {
+#   
+#   colnames (OrdersMatrix2) <- colnames(alltimeHeaderMix)
+#   OrdersMatrix2 [,match(i, colnames(OrdersMatrix2))] <- OrdersMatrix[ , match(i, colnames(OrdersMatrix))]
+#   OrdersMatrix <- OrdersMatrix2
+#   
+#  
+#   colnames (SalesMatrix2) <- colnames(alltimeHeaderMix)
+#   SalesMatrix2 [ ,match(i, colnames(SalesMatrix2))] <- SalesMatrix[ , match(i, colnames(SalesMatrix))]
+#   SalesMatrix <- SalesMatrix2
+#   
+#   colnames (StockMatrix2) <- colnames(alltimeHeaderMix)
+#   StockMatrix2 [ ,match(i, colnames(StockMatrix2))] <- StockMatrix[ , match(i, colnames(StockMatrix))]
+#   StockMatrix <- StockMatrix2
+#   
+# }
+# 
+# time<-20
+# 
+# names(report) [4:ncol(report)]<-names(alltimeHeaderMix)
+
+#
+#  Корректный вариант
+#
+
+
+StockMatrix2 <- StockMatrix
+SalesMatrix2 <- SalesMatrix
+OrdersMatrix2 <- OrdersMatrix
+
+for (i in 1:ncol(OrdersMatrix) ) {
+  
+  colnames (StockMatrix2) <- colnames(alltimeHeaderMix)
+  StockMatrix2 [ ,match(i, colnames(StockMatrix2))] <- StockMatrix[ , match(i, colnames(StockMatrix))]
+
+ 
+ colnames (SalesMatrix2) <- colnames(alltimeHeaderMix)
+ SalesMatrix2 [ ,match(i, colnames(SalesMatrix2))] <- SalesMatrix[ , match(i, colnames(SalesMatrix))]
+
+ 
+ colnames (OrdersMatrix2) <- colnames(alltimeHeaderMix)
+ OrdersMatrix2 [,match(i, colnames(OrdersMatrix2))] <- OrdersMatrix[ , match(i, colnames(OrdersMatrix))]
+
+  
+}
+
+StockMatrix <- StockMatrix2
+SalesMatrix <- SalesMatrix2
+OrdersMatrix <- OrdersMatrix2
+
+# на 2 меньше, чем колонка с текущей неделей
+time<-match(weekReport, colnames(alltimeHeader)) -2
+
+rat<-stockTurnover(StockMatrix,SalesMatrix,OrdersMatrix, ParametersMatrix, time)
+
+
+
+NamesMatrix<-as.data.frame(matrix(nrow=nrow(rat), ncol=2))
+NamesMatrix<- weeklyStock[rep(row.names(weeklyStock), 3), 1:2]
+
+statusMatrix<-as.data.frame(matrix(nrow=nrow(rat), ncol=1))
+statusMatrix[1:nrow(rat)/3, ]<-"остатки"
+statusMatrix[nrow(rat)/3+2:nrow(rat)/3*2, ]<-"заказать"
+statusMatrix[(nrow(rat)/3*2+1):nrow(rat), ]<- "в пути"
+
+
+report<-cbind(NamesMatrix,statusMatrix, rat)
+
+# округляем
+report [ 4: ncol(report)] <- round (report [ 4: ncol(report)], digits = 0)
+
+
+#присвоить значения колонкам
+names(report) [4:ncol(report)]<-names(alltimeHeaderMix)
+report<-  report[ , c(1,2, 3, 28:45)]
+
+
+
+# 
+# конец блока "перехода года" для ПКИ
+#
+
+
+
+
+
+# переход для МСК филиалы
+
+
+# получили 4 матрицы для передачи в RCPP
+StockMatrixMSK<-as.matrix(weeklyStockMoscow [,3:54])
+OrdersMatrixMSK<-matrix(nrow=nrow(currentFinishedStock), ncol=52)
+OrdersMatrixMSK[is.na(OrdersMatrixMSK)]<-0
+SalesMatrixMSK<-as.matrix(salesMoscow[ ,56:107])
+ParametersMatrixMSK<-as.matrix(paramMoscow[ ,c(56:58)])
+
+#убираем некорретные названия колонок, оставшиеся после merge
+colnames(SalesMatrixMSK) <-c(1:52)
+colnames(StockMatrixMSK) <-c(1:52)
+colnames(OrdersMatrixMSK) <-c(1:52)
+
+StockMatrix2 <- StockMatrixMSK
+SalesMatrix2 <- SalesMatrixMSK
+OrdersMatrix2 <- OrdersMatrixMSK
+
+for (i in 1:ncol(OrdersMatrixMSK) ) {
+  
+  colnames (StockMatrix2) <- colnames(alltimeHeaderMix)
+  StockMatrix2 [ ,match(i, colnames(StockMatrix2))] <- StockMatrixMSK[ , match(i, colnames(StockMatrixMSK))]
+  
+  
+  colnames (SalesMatrix2) <- colnames(alltimeHeaderMix)
+  SalesMatrix2 [ ,match(i, colnames(SalesMatrix2))] <- SalesMatrixMSK[ , match(i, colnames(SalesMatrixMSK))]
+  
+  
+  colnames (OrdersMatrix2) <- colnames(alltimeHeaderMix)
+  OrdersMatrix2 [,match(i, colnames(OrdersMatrix2))] <- OrdersMatrixMSK[ , match(i, colnames(OrdersMatrixMSK))]
+  
+  
+}
+
+StockMatrixMSK <- StockMatrix2
+SalesMatrixMSK <- SalesMatrix2
+OrdersMatrixMSK <- OrdersMatrix2
+
+# на 2 меньше, чем колонка с текущей неделей
+time<-match(weekReport, colnames(alltimeHeader)) -2
+
+
+#расчет товаропотока для Москвы
+flowMSK<-round(stockTurnover(StockMatrixMSK,SalesMatrixMSK,OrdersMatrixMSK, ParametersMatrixMSK, time))
+
+
+
+# присваиваем названия и статус для каждой позиции
+NamesMatrix<-as.data.frame(matrix(nrow=nrow(flowMSK), ncol=2))
+NamesMatrix<- weeklyStockMoscow[rep(row.names(weeklyStockMoscow), 3), 1:2]
+
+statusMatrix<-as.data.frame(matrix(nrow=nrow(flowMSK), ncol=1))
+statusMatrix[1:nrow(flowMSK)/3, ]<-"остатки"
+statusMatrix[nrow(flowMSK)/3+2:nrow(flowMSK)/3*2, ]<-"заказы"
+statusMatrix[(nrow(flowMSK)/3*2+1):nrow(flowMSK), ]<- "в пути"
+
+
+
+##
+##Полная таблица с данными по Москве
+##
+reportMSK<-cbind(NamesMatrix,statusMatrix, flowMSK)
+
+
+#присвоить значения колонкам
+names(reportMSK) [4:ncol(reportMSK)]<-names(alltimeHeaderMix)
+reportMSK<-  reportMSK[ , c(1,2, 3, 28:45)]
+
+#необходимо присвоить навзания для запуска "dates.R"
+colnames(alltimeHeader)<-c("code", "item.x", c(1:52))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# обработчик потребностей полуфабрикатов
+
+library(readxl)
+semiProducts<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/semiproducts.xls")
+colnames(semiProducts) <- c("код последнего этапа", "code", "наименование", "этапы", "остаток", "потребность", "заказать" )
+# получили коды последних этапов в 1-й колонке. Потребление по этим кодам берем из 1С.
+semiProducts$id  <- 1:nrow(semiProducts) # колонка вводится для сохранения порядка строк
+# Потребление по остальным кодам нужно рассчитать
+lastStageCode<-aggregate(semiProducts [ ,4] ~ semiProducts [ ,1], semiProducts, FUN = function(x) length(unique(x)))
+
+
+
+
+semiProducts<-merge(semiProducts, stockComponents, by ="code", all.x= TRUE, row.names = FALSE)
+colnames(semiProducts)[10]<- "количество"
+semiProducts<-semiProducts[order(semiProducts$id), ]
+
+
+rownames(semiProducts) <- NULL
+semiProducts[is.na(semiProducts)]<-0
+# переставляем колонки с кодами
+semiProducts <- semiProducts [ , c(2,1,3:10)]
+
+semiProducts[ ,10][semiProducts[ ,10]== 0]<- 1 # нулевое количество не отображаеся после предачи в reshape2, поэтому замена на 1
+
+semiProducts[ ,5] <- semiProducts[ ,10]
+
+
+# подставляем остатки из общего отчета по остаткам по каждой позиции для полуфабрикатов 1-й группы
+# делаем расчет по циклу
+# рассчитываем "остаток - потребность" для полуфабрикатов 1-й группы и подставляем остаток в общий отчет по остаткам
+# переходим к 2-й и далее группе
+# делаем сводную таблицу по потребностям для каждого кода
+
+library(reshape2)
+code<-dcast(semiProducts, code ~ id, fun.aggregate=sum) #определеям для каждого кода индекс в таблице
+
+
+
+
+# циклом перебрать все коды, которые относятся к коду последнего этапа 
+# для каждого кода взять потребность последнего этапа и рассчитать потребность в предшествующих этапах
+# исходя из остатков каждого предшествующего этапа
+
+
+for (i in 1:nrow(lastStageCode) ) { # запуск обработчика по количеству кодов последного этапа
+  #nrow (lastStageCode)
+  lastStage<-max(grep(lastStageCode [i,1], semiProducts[ ,1])) # строка относящаяся к последнему этапу кода полуфабриката
+  firstStage<- min(grep(lastStageCode [i,1], semiProducts[ ,1])) # строка относящаяся к первому этапу кода полуфабриката
+  
+  semiProducts [lastStage, 7]<- abs(semiProducts [lastStage, 5]- semiProducts [lastStage, 6])
+ 
+  
+  for (k in 1:(lastStage-firstStage)) { # обработка нужного количества строк, которые относятся к коду последнего полуфабриката
+    
+    #     ## доработка кода 
+    #     # использовать поиск кода для присаивания ему нового результирующего значения, т.е. НЕ использовать merge
+    # semiProducts [lastStage-k, 5] <- semiProducts [lastStage-k, 10]
+    #   semiProducts<-merge(stockComponents, semiProducts, by ="code", all.x= TRUE, row.names = FALSE) # строку переместить в конце цикла
+    #   
+    #     ##
+    
+    
+    semiProducts [lastStage-k, 6] <-  semiProducts [lastStage-(k-1), 7] # присаиваем потребность предыдущему этапу
+    semiProducts [lastStage-k, 7] <-  ifelse(semiProducts [lastStage-k, 6] - semiProducts [lastStage-k, 5]>0,  semiProducts [lastStage-k, 6] - semiProducts [lastStage-k, 5], 0)
+    # 
+   
+    # присваиваем новые остатки после расчета очередной группы полуфабркатов
+    
+    # определяем индекс вхождения кода в общем списке "semiproducts"
+    line<- grep(semiProducts [lastStage-k,2], code[,1]) # опрделеяем строку с индексами вхождения в таблице "code"
+    listCodeId<- which (code[ line, ]> 0) -1 # получаем список индексов
+    listCodeId <- listCodeId [c(2:length(listCodeId))] # пропускаем 1-е значение
+    
+    #записываем новые остатки и переходим к другой группе полуфабрикатов
+    semiProducts [listCodeId,10] <- semiProducts [lastStage-k, 5] -  semiProducts [lastStage-k, 6]
+    #записываем результирующие остатки по рассчитанной группе в "остатки" колонки "5" для расчета по др. группам
+    semiProducts [ listCodeId,5] <-ifelse(semiProducts [ listCodeId,10]>0, semiProducts [ listCodeId,10], 0) #записываем новые остатки (после расчета группы полуфабрикатов)
+    
+    #ifelse(semiProducts [ listCodeId,10]>0, semiProducts [ listCodeId,10], 0)
+    
+  }
+
+}
+
+
+
+# 
+# # пример сводной таблицы и суммирования по группе
+# dt <- data.frame(age=sample(20,10),group=sample(1:5,20,rep=T))
+# aggregate(dt$age, by=list(dt$group), FUN=length)[2] # length - количество  в группе; sum - сумма в группе
+
+
+purchase<-aggregate(semiProducts$заказать, by=list(semiProducts$code), FUN=sum)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Выполнение плана продаж для Москвы
+
+soldMSK<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/факт продажи МСК.xls", skip =2)
+colnames(soldMSK) <- soldMSK [1, ]
+salesPlanMSK<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж МСК-", month(Sys.Date())-1, ".xls", sep=""))
+colnames(salesPlanMSK) <- salesPlanMSK [2, ]
+
+soldplanMSK<-merge(salesPlanMSK, soldMSK, by ="Код", all.x= TRUE)
+soldplanMSK<- soldplanMSK [ ,c(1,4,6, 12, 13, 14)]
+colnames(finishedGoodsList)<- c("Код", "наименование", "себестоимость")
+
+colnames(soldplanMSK)<- c("Код", "наименование", "план продаж", "факт продаж", "выручка", "маржа")
+soldplanMSK [ ,1]<- as.numeric(soldplanMSK[ , 1])
+
+
+soldplanMSK<-merge(soldplanMSK, finishedGoodsList, by ="Код", all.x= TRUE)
+soldplanMSK<- soldplanMSK [ , c(1:6,8)]
+
+soldplanMSK[is.na(soldplanMSK)]<-0
+soldplanMSK <-soldplanMSK [ c(1:(nrow(soldplanMSK)-3)), ]
+
+
+soldplanMSK[soldplanMSK==" "]<- "0"
+
+#преобразовываем в числовой формат
+for (i in 3:6 ) {
+  soldplanMSK[ ,i] <- as.numeric(soldplanMSK[ ,i])
+}
+
+#факт продаж по себестоимости / план продаж по себестоимости
+MSKsalesprogress<-round(sum(as.numeric(soldplanMSK[ , 4]) *  soldplanMSK [,7])  /  sum(as.numeric(soldplanMSK[ , 3]) *  soldplanMSK [,7]), digits=2)
+
+MSKrealSales<- sum(as.numeric(soldplanMSK[ , 4]) *  soldplanMSK [,7])
+MSKplanSales<- sum(as.numeric(soldplanMSK[ , 3]) *  soldplanMSK [,7])
+
+soldplanMSK$выполнение <-  round(soldplanMSK [ ,4]/soldplanMSK [ ,3], digits=2)*100
+soldplanMSK<- soldplanMSK [order(-soldplanMSK$выручка),] 
+row.names(soldplanMSK) <- NULL
+
+colnames (soldplanMSK) [8] <- "%, выполнения"
+
+write.csv(soldplanMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanMSK.csv")
+
+
+
+
+
+
+
+
+# Выполнение плана продаж для Санкт-Петербурга
+
+soldSPb<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/факт продажи СПб.xls", skip =2)
+colnames(soldSPb) <- soldSPb [1, ]
+salesPlanSPb<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж СПб-", month(Sys.Date())-1, ".xls", sep=""))
+colnames(salesPlanSPb) <- salesPlanSPb [2, ]
+
+
+soldplanSPb<-merge(salesPlanSPb, soldSPb, by ="Код", all.x= TRUE)
+soldplanSPb<- soldplanSPb [ ,c(1,4,6, 12, 13, 14)]
+colnames(finishedGoodsList)<- c("Код", "наименование", "себестоимость")
+
+colnames(soldplanSPb)<- c("Код", "наименование", "план продаж", "факт продаж", "выручка", "маржа")
+soldplanSPb [ ,1]<- as.numeric(soldplanSPb[ , 1])
+
+
+soldplanSPb<-merge(soldplanSPb, finishedGoodsList, by ="Код", all.x= TRUE)
+soldplanSPb<- soldplanSPb [ , c(1:6,8)]
+
+soldplanSPb[is.na(soldplanSPb)]<-0
+soldplanSPb <-soldplanSPb [ c(1:(nrow(soldplanSPb)-3)), ]
+
+
+soldplanSPb[soldplanSPb==" "]<- "0"
+
+#преобразовываем в числовой формат
+for (i in 3:6 ) {
+  soldplanSPb[ ,i] <- as.numeric(soldplanSPb[ ,i])
+}
+
+#факт продаж по себестоимости / план продаж по себестоимости
+SPbsalesprogress<- round(sum(as.numeric(soldplanSPb[ , 4]) *  soldplanSPb [,7])  /  sum(as.numeric(soldplanSPb[ , 3]) *  soldplanSPb [,7]), digits=2)
+
+SPbrealSales<- sum(as.numeric(soldplanSPb[ , 4]) *  soldplanSPb [,7])
+SPbplanSales<- sum(as.numeric(soldplanSPb[ , 3]) *  soldplanSPb [,7])
+
+soldplanSPb$выполнение <-  round(soldplanSPb [ ,4]/soldplanSPb [ ,3], digits=2)*100
+soldplanSPb<- soldplanSPb [order(-soldplanSPb$выручка),] 
+row.names(soldplanSPb) <- NULL
+
+colnames (soldplanSPb) [8] <- "%, выполнения"
+
+write.csv(soldplanSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanSPb.csv")
+
+
+
+
+
+
+
+
+
+
+# выполнение плана продаж Новосибирском
+
+soldNSK<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/факт продажи НСК.xls", skip =2)
+colnames(soldNSK) <- soldNSK [1, ]
+salesPlanNSK<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж НСК-", month(Sys.Date())-1, ".xls", sep=""))
+colnames(salesPlanNSK) <- salesPlanNSK [2, ]
+
+soldplanNSK<-merge(salesPlanNSK, soldNSK, by ="Код", all.x= TRUE)
+soldplanNSK<- soldplanNSK [ ,c(1,4,6, 12, 13, 14)]
+colnames(finishedGoodsList)<- c("Код", "наименование", "себестоимость")
+
+colnames(soldplanNSK)<- c("Код", "наименование", "план продаж", "факт продаж", "выручка", "маржа")
+soldplanNSK [ ,1]<- as.numeric(soldplanNSK[ , 1])
+
+
+soldplanNSK<-merge(soldplanNSK, finishedGoodsList, by ="Код", all.x= TRUE)
+soldplanNSK<- soldplanNSK [ , c(1:6,8)]
+
+soldplanNSK[is.na(soldplanNSK)]<-0
+soldplanNSK <-soldplanNSK [ c(1:(nrow(soldplanNSK)-3)), ]
+
+
+soldplanNSK[soldplanNSK==" "]<- "0"
+
+#преобразовываем в числовой формат
+for (i in 3:6 ) {
+  soldplanNSK[ ,i] <- as.numeric(soldplanNSK[ ,i])
+}
+
+#факт продаж по себестоимости / план продаж по себестоимости
+NSKsalesprogress<- round(sum(as.numeric(soldplanNSK[ , 4]) *  soldplanNSK [,7])  /  sum(as.numeric(soldplanNSK[ , 3]) *  soldplanNSK [,7]), digits=2)
+
+NSKrealSales<- sum(as.numeric(soldplanNSK[ , 4]) *  soldplanNSK [,7])
+NSKplanSales<- sum(as.numeric(soldplanNSK[ , 3]) *  soldplanNSK [,7])
+
+soldplanNSK$выполнение <-  round(soldplanNSK [ ,4]/soldplanNSK [ ,3], digits=2)*100
+soldplanNSK<- soldplanNSK [order(-soldplanNSK$выручка),] 
+
+row.names(soldplanNSK) <- NULL
+
+colnames (soldplanNSK) [8] <- "%, выполнения"
+
+write.csv(soldplanNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanNSK.csv")
+
+
+# формируем таблицу с данными план/факт и общий % выполнения для каждого филиала для передачи на сервер
+salesAnalysis <- data.frame(
+                            c(sum((as.numeric(soldplanMSK[ , 4]) *  soldplanMSK [,7])), 
+                              sum(as.numeric(soldplanSPb[ , 4]) *  soldplanSPb [,7]),
+                              sum(as.numeric(soldplanNSK[ , 4]) *  soldplanNSK [,7])),
+                            
+                            c(sum(as.numeric(soldplanMSK[ , 3]) *  soldplanMSK [,7]),
+                              sum(as.numeric(soldplanSPb[ , 3]) *  soldplanSPb [,7]),
+                              sum(as.numeric(soldplanNSK[ , 3]) *  soldplanNSK [,7])))
+
+salesAnalysis <- as.data.frame(t(salesAnalysis))
+colnames(salesAnalysis) <- c("Москва", "Санкт-Петербург", "Новосибирск")
+row.names(salesAnalysis) <- c("факт", "план")
+salesAnalysis <- rbind(salesAnalysis, round(salesAnalysis[1,]/salesAnalysis[2,]*100, digits=1) )
+write.csv(salesAnalysis, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/salesAnalysis.csv")
+
+
+
+
+#добавить показатель уровня логистического сервиса (% количества дней в месяце, когда "физический" остаток товара на складе в шт 
+# превышал страховой запас)
+
+#логистический сервис для Москвы
+
+# цикл от 1 до 22 по загрузке  и добавлению остатков к таблице
+
+##
+##загружаем данные по остаткам на всех складах
+##
+##
+##загружаем данные по остаткам на всех складах
+##
+#allStock<-read.csv(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/все остатки ", Sys.Date(), ".csv", sep=""), sep= ";", skip = "1")
+
+
+
+# получаем количество дней, в которых регистрировались остатки на складах
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки", full.names = TRUE)
+#
+datesNumber<- length(flist) 
+
+##
+##загружаем данные по остаткам на всех складах
+##
+
+
+for (i in 1:datesNumber ) {
+  
+
+
+
+allStock<-read_excel(paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки/все остатки ", i, ".xls", sep=""))
+#заменить NA на ноль
+allStock[is.na(allStock)]<-0
+
+header<-allStock[1,]
+
+
+#обработать содержимое для получения цифр
+write.csv(allStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv")
+
+sat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+              , skip=1, na.strings=c(" ", NA), stringsAsFactors=FALSE) 
+
+write.csv(sat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", )
+
+sat2<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+               skip=2) 
+
+
+#добавить заголовки стобцов
+names(sat2)<-c(0,0,header)
+
+
+warehouseStockMoscow<-match("Москва продажи (регионы)", colnames(sat2))
+warehouseStockMoscowBranch<-match("Москва, Склад продажи", colnames(sat2))
+warehouseStockMoscowTransit<-match("Москва в Пути (филиал)", colnames(sat2))
+
+stockComponentsMoscow<-sat2[,c(4,6,warehouseStockMoscow)]
+#names(stockComponentsMoscow)<-c("code", "item")
+
+sat2[is.na(sat2)]<-0
+
+
+
+
+
+
+#вычесть из остатков резервы и добавить 
+stockComponentsMoscow[ ,3]<- sat2[ ,warehouseStockMoscow]+sat2[ ,warehouseStockMoscowBranch] + sat2[ ,warehouseStockMoscowTransit] 
+
+#присвоили номер недели текущим остаткам
+names(stockComponentsMoscow)[3]<-as.character(i)
+
+
+soldplanMSK<-merge(soldplanMSK, stockComponentsMoscow, by ="Код", all.x= TRUE)
+soldplanMSK <- soldplanMSK [ , c(1:(ncol(soldplanMSK)-2),ncol(soldplanMSK))]
+}
+
+
+#сортировка по убыванию выручки
+soldplanMSK<- soldplanMSK [order(-soldplanMSK$выручка),] 
+
+
+for (i in 1:nrow(soldplanMSK) ) {
+  # количество дней, когда остаток превышает страховой запас, т.е. 25% от плана продаж
+vec <- soldplanMSK [i, 9:(ncol(soldplanMSK)-1)] > soldplanMSK [i,3]*0.25
+#расчет процента дней, когда остаток превышал страховой запас от общего количества дней
+soldplanMSK$ЛогСервисПроц [i] <- round(length(vec[vec==TRUE]) /length(9:(ncol(soldplanMSK)-1))*100)
+
+}
+
+row.names(soldplanMSK) <- NULL
+
+MSKstockArch <- soldplanMSK [ , c(1,2,3, 10:ncol(soldplanMSK)-1)]
+write.csv(MSKstockArch, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/MSKstockArch.csv")
+
+
+soldplanMSK <- soldplanMSK [ , c(1:8, ncol(soldplanMSK))] 
+
+write.csv(soldplanMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanMSK.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# получаем количество дней, в которых регистрировались остатки на складах
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки", full.names = TRUE)
+#
+datesNumber<- length(flist) 
+
+##
+##загружаем данные по остаткам на всех складах
+##
+
+
+for (i in 1:datesNumber ) {
+  
+  
+  
+  
+  allStock<-read_excel(paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки/все остатки ", i, ".xls", sep=""))
+  #заменить NA на ноль
+  allStock[is.na(allStock)]<-0
+  
+  header<-allStock[1,]
+  
+  
+  #обработать содержимое для получения цифр
+  write.csv(allStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv")
+  
+  sat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+                , skip=1, na.strings=c(" ", NA), stringsAsFactors=FALSE) 
+  
+  write.csv(sat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", )
+  
+  sat2<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+                 skip=2) 
+  
+  
+  #добавить заголовки стобцов
+  names(sat2)<-c(0,0,header)
+  
+  
+  warehouseStockSPb<-match("Санкт-Петербург,Склад продажи", colnames(sat2))
+  
+  stockComponentsSPb<-sat2[,c(4,6,warehouseStockSPb)]
+  #names(stockComponentsMoscow)<-c("code", "item")
+  
+  sat2[is.na(sat2)]<-0
+  
+  
+  
+  
+  
+  
+  #вычесть из остатков резервы и добавить 
+  stockComponentsSPb[ ,3]<- sat2[ ,warehouseStockSPb] 
+  
+  #присвоили номер недели текущим остаткам
+  names(stockComponentsSPb)[3]<-as.character(i)
+  
+  
+  soldplanSPb<-merge(soldplanSPb, stockComponentsSPb, by ="Код", all.x= TRUE)
+  soldplanSPb <- soldplanSPb [ , c(1:(ncol(soldplanSPb)-2),ncol(soldplanSPb))]
+}
+
+
+#сортировка по убыванию выручки
+soldplanSPb<- soldplanSPb [order(-soldplanSPb$выручка),] 
+
+
+for (i in 1:nrow(soldplanSPb) ) {
+  # количество дней, когда остаток превышает страховой запас, т.е. 25% от плана продаж
+  vec <- soldplanSPb [i, 9:(ncol(soldplanSPb)-1)] > soldplanSPb [i,3]*0.25
+  #расчет процента дней, когда остаток превышал страховой запас от общего количества дней
+  soldplanSPb$ЛогСервисПроц [i] <- round(length(vec[vec==TRUE]) /length(9:(ncol(soldplanSPb)-1))*100)
+  
+}
+
+row.names(soldplanSPb) <- NULL
+
+SPbstockArch <- soldplanSPb [ , c(1,2,3, 10:ncol(soldplanSPb)-1)]
+write.csv(SPbstockArch, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/SPbstockArch.csv")
+
+
+soldplanSPb <- soldplanSPb [ , c(1:8, ncol(soldplanSPb))] 
+
+write.csv(soldplanSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanSPb.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Новосибирск
+
+# получаем количество дней, в которых регистрировались остатки на складах
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки", full.names = TRUE)
+#
+datesNumber<- length(flist) 
+
+##
+##загружаем данные по остаткам на всех складах
+##
+
+
+for (i in 1:datesNumber ) {
+  
+  
+  
+  
+  allStock<-read_excel(paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки/все остатки ", i, ".xls", sep=""))
+  #заменить NA на ноль
+  allStock[is.na(allStock)]<-0
+  
+  header<-allStock[1,]
+  
+  
+  #обработать содержимое для получения цифр
+  write.csv(allStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv")
+  
+  sat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+                , skip=1, na.strings=c(" ", NA), stringsAsFactors=FALSE) 
+  
+  write.csv(sat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", )
+  
+  sat2<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+                 skip=2) 
+  
+  
+  #добавить заголовки стобцов
+  names(sat2)<-c(0,0,header)
+  
+  
+  
+  warehouseStockNSK<- match("Новосибирск, Склад продажи", colnames(sat2))
+  warehouseStockNSKBranch<- match("Склад Транзитный  для НВС", colnames(sat2))
+  warehouseStockNSKTransit<- match("ТРАНЗИТНЫЙ СКЛАД", colnames(sat2))
+  
+  stockComponentsNSK<-sat2[,c(4,6,warehouseStockNSK)]
+  #names(stockComponentsNSK)<-c("code", "item")
+  
+  sat2[is.na(sat2)]<-0
+  
+  
+  
+  
+  
+  
+  #вычесть из остатков резервы и добавить 
+  stockComponentsNSK [ ,3]<- sat2[ ,warehouseStockNSK]+sat2[ ,warehouseStockNSKBranch] + sat2[ ,warehouseStockNSKTransit] 
+  
+  #присвоили номер недели текущим остаткам
+  names(stockComponentsNSK)[3]<-as.character(i)
+  
+  
+  soldplanNSK<-merge(soldplanNSK, stockComponentsNSK, by ="Код", all.x= TRUE)
+  soldplanNSK <- soldplanNSK [ , c(1:(ncol(soldplanNSK)-2),ncol(soldplanNSK))]
+}
+
+
+#сортировка по убыванию выручки
+soldplanNSK<- soldplanNSK [order(-soldplanNSK$выручка),] 
+
+
+for (i in 1:nrow(soldplanNSK) ) {
+  # количество дней, когда остаток превышает страховой запас, т.е. 25% от плана продаж
+  vec <- soldplanNSK [i, 9:(ncol(soldplanNSK)-1)] > soldplanNSK [i,3]*0.25
+  #расчет процента дней, когда остаток превышал страховой запас от общего количества дней
+  soldplanNSK$ЛогСервисПроц [i] <- round(length(vec[vec==TRUE]) /length(9:(ncol(soldplanNSK)-1))*100)
+  
+}
+
+row.names(soldplanNSK) <- NULL
+
+NSKstockArch <- soldplanNSK [ , c(1,2,3, 10:ncol(soldplanNSK)-1)]
+vecname <- rep("д", each=ncol(NSKstockArch))
+colnames(NSKstockArch) <- vecname
+names<- c("Код", "наименование", "план продаж", c (1:(ncol(NSKstockArch)-3)) )
+NSKstockArch <- rbind(names, NSKstockArch)
+write.csv(NSKstockArch, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/NSKstockArch.csv")
+#write.table( NSKstockArch, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/NSKstockArch.csv", sep=",", col.names=FALSE)
+
+soldplanNSK <- soldplanNSK [ , c(1:8, ncol(soldplanNSK))] 
+
+write.csv(soldplanNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanNSK.csv")
+
+
+
+# скопировать все полученные после расчетов файлы
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов", full.names = TRUE)
+file.copy(flist, paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/Архив/", Sys.Date(), sep = ""))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library(sendmailR)
+
+#set working directory
+setwd("C:/workingdirectorypath")
+
+#####send plain email
+
+from <- "m.smirnov@eltis.com"
+to <- "m.smirnov@eltis.com"
+body <- iconv("логистика", to = "KOI8-R")
+subject <- iconv("вот такой тест", to = "KOI8-R")
+         
+mailControl=list(smtpServer="xch01.eltis.intra")
+
+sendmail(from=from,to=to,subject=subject,msg=body,control=mailControl)
+
+
+
+
+
+#####send same email with attachment
+
+#needs full path if not in working directory
+attachmentPath <- "subfolder/log.txt"
+
+#same as attachmentPath if using working directory
+attachmentName <- "log.txt"
+
+#key part for attachments, put the body and the mime_part in a list for msg
+attachmentObject <- mime_part(x=attachmentPath,name=attachmentName)
+bodyWithAttachment <- list(body,attachmentObject)
+
+sendmail(from=from,to=to,subject=subject,msg=bodyWithAttachment,control=mailControl)
+
+
+
+
+
+
+
+
