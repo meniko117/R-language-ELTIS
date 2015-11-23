@@ -1,0 +1,2943 @@
+library(readxl)
+library(readr)
+library(stringr)
+library (reshape2)
+library (Rcpp)
+library (lubridate)
+
+#options(warn=0)   выключить "warnings" options(warn=-1) 
+
+# скопировать все исходные файлы
+flist <- list.files("Z:/Analytical system", full.names = TRUE)
+file.copy(flist, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов", overwrite = TRUE)
+
+
+
+weekBegin<- data.frame(matrix(nrow=1, ncol=52))
+
+
+#номер дня недели (функция из lubridate) для текущего года
+# в строке ниже при смене года заменить на первое января наступающего года (в 2-х местах)
+
+firstMonday<- as.Date(strptime("01.01.2015", format = "%d.%m.%Y"))-(wday(as.Date(strptime("01.01.2015", format = "%d.%m.%Y")))-2)
+
+weekBegin[1]<-firstMonday
+
+
+for (i in 1:51 ) {
+  weekBegin[i+1] = weekBegin[i] +days(7)
+}
+
+
+#РЅРѕРјРµСЂ РјРµСЃСЏС†Р° РґР»СЏ РєР°Р¶РґРѕР№ РЅРµРґРµР»Рё
+monthBegin<- data.frame(matrix(nrow=1, ncol=52))
+for (i in 1:52 ) {
+  
+  monthBegin[1,i] <- month(as.POSIXlt(weekBegin[1,i], format="%d.%m.%Y"))
+}
+
+colnames(weekBegin)<-monthBegin[1,]
+
+row<-as.data.frame(matrix(nrow=1,ncol=52))
+row[is.na(row)]<-0
+
+
+
+weekBegin3<- rbind(weekBegin [ ,1], row)
+
+
+
+
+
+colnames (weekBegin3)<- colnames (weekBegin)
+
+weekBegin3 [2,1] <-1
+
+for (i in 2:52 ) {
+  ifelse ( colnames(weekBegin3)[i] == colnames(weekBegin3)[i-1], weekBegin3 [2,i]<- weekBegin3 [2,i-1]+1, weekBegin3 [2,i]<-1)
+  
+}
+
+
+
+for (i in 1:52 ) {
+  weekBegin3[1,i] <- as.character(weekBegin[1, i])
+}
+
+# для приведения размерности в соответствие
+twocolumns<-as.data.frame(matrix(nrow=2,ncol=2))
+
+alltimeHeader<- cbind(twocolumns, weekBegin3)
+
+#номера месяцев рассчитанных по дате понедельника
+monthnumber<-as.data.frame(matrix(nrow=1,ncol=54))
+monthnumber<-colnames(alltimeHeader)
+alltimeHeader<- rbind(monthnumber, alltimeHeader)
+
+colnames(alltimeHeader)<-c("code", "item.x", c(1:52))
+
+# 
+# получили "alltimeHeader" с указанием номера недели, номера месяца, даты понедельника, количества недель в месяце
+# 
+# 
+
+
+#alltimeHeader <- alltimeHeaderMix # ТЕСТ
+
+
+
+##
+##загружаем данные по остаткам на всех складах
+##
+allStock<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/все остатки.xls")
+#заменить NA на ноль
+allStock[is.na(allStock)]<-0
+
+header<-allStock[1,]
+
+
+#обработать содержимое для получения цифр
+write.csv(allStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv")
+
+sat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+              , skip=1, na.strings=c(" ", NA), stringsAsFactors=FALSE) 
+
+write.csv(sat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", )
+
+sat2<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+               skip=2) 
+
+
+#добавить заголовки стобцов
+names(sat2)<-c(0,0,header)
+sat2[is.na(sat2)]<-0
+
+#получить номер колонки заданного склада
+warehouseStock<-match("Склад ПКИ и материалы", colnames(sat2))
+warehouseStock1<-match("Склад готовой продукции (Произ-во)", colnames(sat2))
+warehouseStock2<-match("Основной цех", colnames(sat2))
+warehouseStock3<-match("Механический участок", colnames(sat2))
+stockComponents<-sat2[,c(4,6,warehouseStock)] 
+stockComponents [ ,3]<- stockComponents [ ,3] + sat2[ ,warehouseStock1] + sat2[ ,warehouseStock2] + sat2[ ,warehouseStock3]
+
+names(stockComponents)<-c("code", "item")
+
+stockComponents[is.na(stockComponents)]<-0
+
+
+##
+## конец блока загрузки данных по остаткам
+
+
+
+#парсинг даты отчета по остаткам
+date<-names(allStock)[1]
+library(stringr)
+dateReport<-str_sub(date, start= -8)
+
+
+# номер текущей недели
+weekReport<-round(as.numeric(
+  difftime(strptime(dateReport, format = "%d.%m.%y"),
+           strptime("01.01.2015", format = "%d.%m.%Y"), units="weeks") +1), digits=0)
+
+#присвоили номер недели текущим остаткам
+names(stockComponents)[3]<-weekReport
+
+
+
+
+# загружаем таблицу с полным ассортиментом, который держим на контроле и параметрами (срок доставки, страховой запас и проч.)
+param<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/stockFlowParameters.xls")
+
+names(param)<-c("code", "item", "MOQ", "safety stock", "lead time", "order quantity")
+
+# names(weeklySales)<-c("code","items", c("1":"52"))
+
+#создать таблицу с полным ассортиментом и 52-неделями пустых значений
+#сделать сводную таблицу, включив остатки по текущей неделе 
+#(ежнедельно догружать остатки в имеющуюся таблицу)
+currentStock<-as.data.frame(matrix(nrow=nrow(param), ncol=54))
+currentStock[,1:2]<-param[,1:2]
+names(currentStock)<-c("code", "item", c(1:52))
+
+#получаем таблицу с еженедельными остатками и для текущей недели обновляем данные
+weeklyStock<-merge(currentStock, stockComponents, by ="code", all.x= TRUE)
+
+# вставить блок с парсингом типа "17.y"
+# затем подать получившуюся матрицу на вход Rcpp блока
+
+
+
+nam<-colnames(stockComponents) # номера недель, где есть заказы
+nam2<-colnames(weeklyStock) # все идентификаторы недель, после объединения таблиц
+difnames<-paste(nam, ".x", sep ="") [3]
+difnames2<-paste(nam, ".y", sep ="") [3]
+
+len<-length(weeklyStock) # 
+
+colindex<-match(difnames,nam2) # поиск номеров колонок в 52-недельной матрице, совмещенной с матрцие заказов, которые совпали с матрицей заказов
+colindex2<-match(difnames2,nam2) # поиск номеров колонок в матрцие заказов, которые совпали неделями заказов
+
+
+
+#присваиваем значения размещенных заказов общей таблице, включающей понедельный план
+weeklyStock[,colindex]<-weeklyStock[,colindex2]
+
+names(weeklyStock)<-c("code","item", c("1":"52"))
+weeklyStock[is.na(weeklyStock)]<-0 # получили таблицу с остатком на текущей неделе в 52-недельной матрице
+stockAtHand<-as.matrix(weeklyStock[,3:54]) # матрица с остатками для передачи в RCPP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##
+## получаем 52-недельную матрицу с размещенными заказами на каждой неделе (ТОВАРЫ В ПУТИ)
+##
+
+#rat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/товары в пути.xls",skip=2, col_names = FALSE)
+rat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/товары в пути.csv",skip=2, sep=";")
+nr<-nrow(rat)
+
+for (m in 2:nr)
+{rat[m,14]<-as.data.frame(rat[m,6])
+}
+
+
+code<-regexpr(']',rat[,5])
+rat$code<-substr(rat[,5], 2, code-1)
+rat$orderDate<-rat[,2]
+# "%Y" или "%y" зависит от тображения года, например, "18.08.15" или "18.08.2015"
+rat$orderWeek<-round(as.numeric(
+  difftime(strptime(rat$orderDate, format = "%d.%m.%y"),  #ФОРМАТ !!! %Y или y%
+           strptime("01.01.2015", format = "%d.%m.%Y"), units="weeks") +1), digits=0)
+#rat[is.na(rat)]<-0
+
+wTable<-subset(rat, select=c( 15, 5,  17, 14))
+
+#преобразования номера недели >52 при переходе на другой год
+# количество недель в текущем году
+yearWeeksNumber<- round(as.numeric(
+  difftime(strptime(paste("31",".","12",".", year(dmy(date)), sep=""), format = "%d.%m.%y"),  #ФОРМАТ !!! %Y или y%
+           strptime(paste("01",".","01",".", year(dmy(date)), sep=""), format = "%d.%m.%Y"), units="weeks") +1), digits=0)
+
+
+
+
+for (i in 1:nrow (wTable) ) {
+  
+  wTable [ i,3] <- ifelse(wTable[i,3]>yearWeeksNumber, wTable[i,3]-yearWeeksNumber, wTable[i,3])
+}
+
+names(wTable)<-c("code", "item", "orderWeek", "quantity")
+
+wTable[,4]
+
+
+# получаем таблицу план-график размещенных заказов
+resTable<-dcast(wTable, item ~ orderWeek, fun.aggregate=sum)
+# добавляем колонку с кодом
+code<-regexpr(']',resTable[,1])
+resTable$code<-substr(resTable[,1], 2, code-1)
+
+
+
+# # создаем пустую таблицу
+# calendf<-as.data.frame(matrix(nrow=154, ncol=52))
+# 
+# 
+# names(calendf)<-c("1":"52")
+# 
+# calendf[6:154,1]<-resTable[6:154,1]
+# names(calendf)<-c("item", c("1":"51"))
+# 
+# # сводная таблица для обеспечения размщения заказов в 52-недельной матрице
+# all<-merge(calendf, resTable, by = "item", all = TRUE)
+
+
+
+
+
+# code<-regexpr(']',all[,1])
+# all$code<-substr(all[,1], 2, code-1)
+
+
+weeklyOrders<-merge(currentStock, resTable, by ="code", all.x= TRUE)
+
+nam<-colnames(resTable) # номера недель, где есть заказы
+nam2<-colnames(weeklyOrders) # все идентификаторы недель, после объединения таблиц
+difnames<-paste(nam, ".x", sep ="") 
+difnames2<-paste(nam, ".y", sep ="") 
+
+len<-length(nam) # 
+
+colindex<-match(difnames,nam2)[3:len-2] # поиск номеров колонок в 52-недельной матрице, совмещенной с матрицей заказов, которые совпали с матрицей заказов
+colindex2<-match(difnames2,nam2)[3:len-2] # поиск немеров колонок в матрице заказов, которые совпали неделями заказов
+
+#убираем неопределившиеся колонки
+colindex<-na.omit(colindex)
+colindex2<-na.omit(colindex2)
+
+#присваиваем значения размещенных заказов общей таблице, включающей понедельный план
+weeklyOrders[,colindex]<-weeklyOrders[,colindex2]
+
+names(weeklyOrders)<-c("code","items", c("1":"52"))
+weeklyOrders[is.na(weeklyOrders)]<-0
+
+
+##
+## получаем 3 таблицы: остатки, заказы, потребление в размерности на 52 недели
+##
+weeklyStock<-weeklyStock[,1:54]
+weeklyOrders<-weeklyOrders[,1:54]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+weeklySales<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/weeklySales.xls")
+names(weeklySales)<-c("code","items", c("1":"52"))
+
+# загрузка в другом формате
+# weeklySales<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/weeklySales.csv", sep =";") 
+# names(weeklySales)<-c("code","items", c("1":"52"))
+
+currentStock[,1:2]<-weeklyStock[,1:2]
+weeklySales2<-merge(currentStock, weeklySales, by ="code", all.x= TRUE)
+colnames(weeklySales2)<-c("code", "items", "1":"52")
+
+weeklySales2[,3:54]<-weeklySales2[,56:107] 
+weeklySales2<- weeklySales2[,1:54]
+
+
+
+# 
+# 
+# 
+# 
+# weeklysales формируем из файла из 1С потребление ПКИ на ТЕКУЩИЙ месяц
+# 
+# 
+# 
+# 
+# 
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/потребление компонентов мес ", month(Sys.Date()), ".xls", sep="")
+
+
+componentsConsumption<-read_excel(mu)
+componentsConsumption<- componentsConsumption [, c(2,4,match("Требуется в изделия", componentsConsumption[2, ]))]
+colnames(componentsConsumption) <- c("code", "item", "quantity")
+componentsConsumption <- componentsConsumption [3:nrow(componentsConsumption), ]
+componentsConsumption [ ,3] <- round(as.numeric(componentsConsumption [ ,3]))
+
+# сохранить оригинал потребления на текущий месяц
+write.csv(componentsConsumption, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/потребление ПКИ 1.csv" )
+
+
+componentsConsumption<- merge (weeklySales2[,1:2], componentsConsumption, by ="code", all.x= TRUE) [ , c(1,2,4)]
+componentsConsumption[is.na(componentsConsumption)]<-0
+
+
+#номера колонок, относящихся к текущему месяцу
+colMonth<- grep (month(Sys.Date()), alltimeHeader[1,])
+
+#номера колонок текущего месяца, начиная с текущей недели и до конца месяца !!
+colMonth<- c((weekReport+2):max(colMonth))
+
+# присваиваем потребляемые количества соответствущим неделям ТЕКУЩЕГО месяца
+weeklySales2 [ ,colMonth ]<- round(componentsConsumption [ ,3] /length(colMonth))
+
+
+
+
+#
+# weeklysales формируем из файла из 1С потребление ПКИ на СЛЕДУЮЩИЙ месяц
+#
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/потребление компонентов мес ", 
+           ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12) , ".xls", sep="")
+componentsConsumption<-read_excel(mu)
+
+
+componentsConsumption<- componentsConsumption [, c(2,4,match("Требуется в изделия", componentsConsumption[2, ]))]
+colnames(componentsConsumption) <- c("code", "item", "quantity")
+componentsConsumption <- componentsConsumption [3:nrow(componentsConsumption), ]
+componentsConsumption [ ,3] <- round(as.numeric(componentsConsumption [ ,3]))
+componentsConsumption [ ,1] <- round(as.numeric(componentsConsumption [ ,1]))
+
+# сохранить оригинал потребления на следующий месяц
+write.csv(componentsConsumption, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/потребление ПКИ 2.csv" )
+
+
+componentsConsumption<- merge (weeklySales2[,1:2], componentsConsumption, by ="code", all.x= TRUE) [ , c(1,2,4)]
+componentsConsumption[is.na(componentsConsumption)]<-0
+
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12) )
+# присваиваем потребляемые количества соответствущим неделям ТЕКУЩЕГО месяца
+weeklySales2 [ ,colMonth ]<- round(componentsConsumption [ ,3] /length(colMonth))
+
+
+
+
+#
+# weeklysales формируем из файла из 1С потребление ПКИ ЧЕРЕЗ 2 месяца
+#
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/потребление компонентов мес ", 
+           ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12), ".xls", sep="")
+componentsConsumption<-read_excel(mu)
+
+
+componentsConsumption<- componentsConsumption [, c(2,4,match("Требуется в изделия", componentsConsumption[2, ]))]
+colnames(componentsConsumption) <- c("code", "item", "quantity")
+componentsConsumption <- componentsConsumption [3:nrow(componentsConsumption), ]
+componentsConsumption [ ,3] <- round(as.numeric(componentsConsumption [ ,3]))
+componentsConsumption [ ,1] <- round(as.numeric(componentsConsumption [ ,1]))
+
+
+# сохранить оригинал потребления через 2 месяца
+write.csv(componentsConsumption, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/потребление ПКИ 3.csv" )
+
+
+componentsConsumption<- merge (weeklySales2[,1:2], componentsConsumption, by ="code", all.x= TRUE) [ , c(1,2,4)]
+componentsConsumption[is.na(componentsConsumption)]<-0
+
+
+#номера колонок, относящихся потреблению ЧЕРЕЗ 2 месяца
+colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+2<= 12, month(Sys.Date())+2, month(Sys.Date())+2-12) )
+# присваиваем потребляемые количества соответствущим неделям ТЕКУЩЕГО месяца
+weeklySales2 [ ,colMonth ]<- round(componentsConsumption [ ,3] /length(colMonth))
+
+
+
+
+
+
+#сортируем параметры товародвижения в установленном порядке
+parameters<-merge(currentStock, param, by ="code", all.x= TRUE)
+
+# получили 4 матрицы для передачи в RCPP
+StockMatrix<-as.matrix(weeklyStock[,3:54])
+OrdersMatrix<-as.matrix(weeklyOrders[,3:54])
+SalesMatrix<-as.matrix(weeklySales2[,3:54])
+ParametersMatrix<-as.matrix(parameters[,c(57,59,58)])
+
+
+
+
+# write.csv(weeklyStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/weeklyStock.csv")
+# 
+# write.csv(weeklyOrders, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/weeklyOrders.csv")
+# 
+# write.csv(weeklySales2, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/weeklySales.csv")
+# 
+
+# 4 таблица
+# param - data frame  со всеми параметрами (срок доставки, страховой запас, количество в заказе)
+
+
+
+
+
+
+
+
+
+# RCPP
+
+
+# функция на C++, которой аргументами передаются
+# матрицы, каждая из которых включает весь перечень позиций в одинаковом порядке
+# матрица x - остатки по неделям (прошлые фактические и расчетные)
+# матрица y - потребление по неделям
+# матрица z - товары в пути по неделям (из отчета по счетам, по которым не получен товар)
+# матрица p - параметры (в неделях): срок доставки, страховой запас, размер заказа
+
+
+
+k <- matrix(50, 10,52)
+m <- matrix(30, 10,52)
+
+m [,28:35]<-c(20,30,50,100,10,60,30,44,67, 57)
+m [,28:35]<-90
+
+placedOrders<-matrix(10, 10,50)
+placedOrders[,c(5:10, 12:18, 25:28)]<-0
+placedOrders[,36]<-100
+
+# нумерация стоблцов при передаче в RCPP начинается с нуля !!!
+# 0-я колонка страховой запас
+# 1-я колонка размер заказа
+# 2-я колонка время в пути
+
+parameters<-matrix(4, 10,3)
+parameters[,1]<-4
+parameters[,2]<-2
+parameters[,3]<-6
+
+#расчет номера текущей недели
+date()
+u<-Sys.Date()
+
+#вычитаем "2", т.к. нумерация колонок с "0" в RCPP
+time<-round(as.numeric(
+  difftime(strptime(u, format = "%Y-%m-%d"),
+           strptime("01.01.2015", format = "%d.%m.%Y"), units="weeks") +1), digits=0)-2
+
+# РґР°РЅРЅС‹Рµ РЅР° 20-СЋ РЅРµРґРµР»СЋ
+#k[,20]<-c(30,50,10,200,40,150,0,80,20,114)
+m [,20:22] <- c(150,10,10,0,40,100,0,80,20,114)
+
+
+cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, NumericMatrix z, NumericMatrix p, int t) {
+            int nrow = x.nrow(), ncol = x.ncol();
+            
+            NumericMatrix out(nrow*3, ncol);
+            
+            
+            
+            for (int i = 0; i < nrow; i++) {         // проход по рядам
+            
+            for (int j = t; j < 50; j++) {           // "j=t" проход по колонкам в ряду (начинаем с недели, следующей за текущей)
+            out (i,t+1)=x (i,t+1);                            // создали начальные остатки по рядам
+            
+            out (i+2*nrow, j) = z(i,j);             // включаем блок с товарами в пути (нижняя треть таблицы)
+            
+            out (i,j) = out(i, j-1)-y(i,j)+z(i,j)+out(i+nrow,j-p(i,2)); // результирующее значение по остаткам на начало недели
+            //вычитаем расход за предыдущую неделю и добавляем сгенерированный заказ на lead time недель ранее
+            // также добавляем товары в пути, которые поступают на текущей неделе
+            //p(i,2) 5-я колонка в таблице параметров срок доставки
+            
+            
+            if (out(i,j) < p(i,0)*y(i,j) && j> t) {       //триггер "заказ"-"нет заказа"; p(i,3)  4-я колонка страховой запас в неделях (нумерация колонок с нуля)
+            out (i+nrow,j)= p(i,1)*y(i,j);                //генерирование величины заказа в зависимости от плана продаж; p(i,4) 5-я колонка размер заказа
+            }
+            else {
+            out (i+nrow,j) =0;                // значение "0", если остаток не меньше "страхового" запаса
+            
+            }
+            }                                       // конец обхода колонок
+            
+            }                                       // конец обхода рядов
+            
+            
+            
+            for (int i = 0; i < nrow; i++) {         // проход по рядам НОВЫй ЦИКЛ
+            
+            for (int j = t+1; j < 50; j++) {           // проход по колонкам в ряду для смещения сгенерированного заказа (t+1) !!
+            //на более ранний срок равный "сроку доставки"
+            
+            out (i+nrow,j) = out(i+nrow, j+(p(i,2)-1)); //  "p(i,2)" уменьшить еще на ЕДИНИЦУ?
+            out (i,j+1) = out(i, j-1)-y(i,j)+z(i,j)+out(i+nrow,j-p(i,2));  // добавить в левой части уравнения  out (...j+1), чтобы сохранить превоначальные остатки
+            
+            }
+            
+            }
+            
+            for (int r = t+2; r < ncol; r++) {         // ДОБАВЛЕННЫЙ ЦИКЛ проход по КОЛИЧЕСТВУ КОЛОНОК !!
+            
+            for (int i = 0; i < nrow; i++) {
+            
+            for (int j = t+2; j < 50; j++) {          // !!
+            
+            if (out(i,j+p(i,2)-1) < p(i,0)*y(i,j) && j> t+1 ) {                       //обнуление "лишних заказов"
+            out (i+nrow,j)= p(i,1)*y(i,j+p(i,2));  // в правой части стояло p(i,1)*y(i,j);
+            }
+            else {
+            out (i+nrow,j) =0;
+            
+            }
+            //            out (i+nrow,j) = out(i+nrow, j+(p(i,2)-1)); // !!!! добавлена строка
+            
+            out (i,j) = out(i, j-1)-y(i,j)+z(i,j)+out(i+nrow,j-p(i,2));
+            
+            }                                       // конец обхода колонок
+            
+            
+            }                                       // конец обхода рядов
+            
+            
+            } //ДОБАВЛЕННЫЙ ЦИКЛ
+            
+            
+            return out;                             // возврат вектора значений по всем рядам
+            
+            }')
+
+
+
+
+# #при запуске и "смещении" номеров недель, приблажаясь к 52 неделе (переходить к "rat78"). Не запускать эту строку.
+# rat<-stockTurnover(StockMatrix,SalesMatrix,OrdersMatrix, ParametersMatrix, time)
+# 
+# NamesMatrix<-as.data.frame(matrix(nrow=nrow(rat), ncol=2))
+# NamesMatrix<- weeklyStock[rep(row.names(weeklyStock), 3), 1:2]
+# 
+# statusMatrix<-as.data.frame(matrix(nrow=nrow(rat), ncol=1))
+# statusMatrix[1:nrow(rat)/3, ]<-"остатки"
+# statusMatrix[nrow(rat)/3+2:nrow(rat)/3*2, ]<-"заказать"
+# statusMatrix[(nrow(rat)/3*2+1):nrow(rat), ]<- "в пути"
+# 
+# 
+# report<-cbind(NamesMatrix,statusMatrix, rat)
+# 
+# # округляем
+# report [ 4: ncol(report)] <- round (report [ 4: ncol(report)], digits = 0)
+# report52<- report
+# 
+# # отбор колонок, начиная с текущей недели и до конца года
+# # при подключении блока year transition отбор колонок вместо "weekReport+3", ставить "27: 45", т.е. "горизонт" 18 недель  
+# report<-  report[ , c(1,2, 3, (weekReport+3):ncol(report))]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library (lubridate)
+
+
+#текущий год
+
+
+
+
+
+
+weekBegin<- data.frame(matrix(nrow=1, ncol=52))
+
+
+
+
+#номер дня недели (функция из lubridate) для текущего года
+# в строке ниже при смене года заменить на первое января наступающего года (в 2-х местах)
+
+
+firstMonday<- as.Date(strptime("01.01.2015", format = "%d.%m.%Y"))-(wday(as.Date(strptime("01.01.2015", format = "%d.%m.%Y")))-2)
+
+
+weekBegin[1]<-firstMonday
+
+
+
+
+for (i in 1:51 ) {
+  weekBegin[i+1] = weekBegin[i] +days(7)
+}
+
+
+
+
+#РЅРѕРјРµСЂ РјРµСЃСЏС†Р° РґР»СЏ РєР°Р¶РґРѕР№ РЅРµРґРµР»Рё
+monthBegin<- data.frame(matrix(nrow=1, ncol=52))
+for (i in 1:52 ) {
+  
+  monthBegin[1,i] <- month(as.POSIXlt(weekBegin[1,i], format="%d.%m.%Y"))
+}
+
+
+colnames(weekBegin)<-monthBegin[1,]
+
+
+row<-as.data.frame(matrix(nrow=1,ncol=52))
+row[is.na(row)]<-0
+
+
+
+
+
+
+weekBegin3<- rbind(weekBegin [ ,1], row)
+
+
+
+
+
+
+
+
+
+
+colnames (weekBegin3)<- colnames (weekBegin)
+
+
+weekBegin3 [2,1] <-1
+
+
+for (i in 2:52 ) {
+  ifelse ( colnames(weekBegin3)[i] == colnames(weekBegin3)[i-1], weekBegin3 [2,i]<- weekBegin3 [2,i-1]+1, weekBegin3 [2,i]<-1)
+  
+}
+
+
+
+
+
+
+for (i in 1:52 ) {
+  weekBegin3[1,i] <- as.character(weekBegin[1, i])
+}
+
+
+# для приведения размерности в соответствие
+twocolumns<-as.data.frame(matrix(nrow=2,ncol=2))
+
+
+alltimeHeader<- cbind(twocolumns, weekBegin3)
+
+
+#номера месяцев рассчитанных по дате понедельника
+monthnumber<-as.data.frame(matrix(nrow=1,ncol=54))
+monthnumber<-colnames(alltimeHeader)
+alltimeHeader<- rbind(monthnumber, alltimeHeader)
+
+
+colnames(alltimeHeader)<-c("code", "item.x", c(1:52))
+
+
+# 
+# получили "alltimeHeader" с указанием номера недели, номера месяца, даты понедельника, количества недель в месяце
+# 
+# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#следующий год
+weekBegin<- data.frame(matrix(nrow=1, ncol=52))
+
+
+
+
+#номер дня недели (функция из lubridate) для текущего года
+# в строке ниже при смене года заменить на первое января наступающего года (в 2-х местах)
+
+
+firstMonday<- as.Date(strptime("01.01.2016", format = "%d.%m.%Y"))-(wday(as.Date(strptime("01.01.2016", format = "%d.%m.%Y")))-2)
+
+
+weekBegin[1]<-firstMonday+7
+
+
+
+
+for (i in 1:51 ) {
+  weekBegin[i+1] = weekBegin[i] +days(7)
+}
+
+
+
+
+#РЅРѕРјРµСЂ РјРµСЃСЏС†Р° РґР»СЏ РєР°Р¶РґРѕР№ РЅРµРґРµР»Рё
+monthBegin<- data.frame(matrix(nrow=1, ncol=52))
+for (i in 1:52 ) {
+  
+  monthBegin[1,i] <- month(as.POSIXlt(weekBegin[1,i], format="%d.%m.%Y"))
+}
+
+
+colnames(weekBegin)<-monthBegin[1,]
+
+
+row<-as.data.frame(matrix(nrow=1,ncol=52))
+row[is.na(row)]<-0
+
+
+
+
+
+
+weekBegin3<- rbind(weekBegin [ ,1], row)
+
+
+
+
+
+
+
+
+
+
+colnames (weekBegin3)<- colnames (weekBegin)
+
+
+weekBegin3 [2,1] <-1
+
+
+for (i in 2:52 ) {
+  ifelse ( colnames(weekBegin3)[i] == colnames(weekBegin3)[i-1], weekBegin3 [2,i]<- weekBegin3 [2,i-1]+1, weekBegin3 [2,i]<-1)
+  
+}
+
+
+
+
+
+
+for (i in 1:52 ) {
+  weekBegin3[1,i] <- as.character(weekBegin[1, i])
+}
+
+
+# для приведения размерности в соответствие
+twocolumns<-as.data.frame(matrix(nrow=2,ncol=2))
+
+
+alltimeHeaderNextYear<- cbind(twocolumns, weekBegin3)
+
+
+#номера месяцев рассчитанных по дате понедельника
+monthnumber<-as.data.frame(matrix(nrow=1,ncol=54))
+monthnumber<-colnames(alltimeHeaderNextYear)
+alltimeHeaderNextYear<- rbind(monthnumber, alltimeHeaderNextYear)
+
+
+colnames(alltimeHeaderNextYear)<-c("code", "item.x", c(1:52))
+
+
+
+
+
+
+# 
+# получили "alltimeHeader" с указанием номера недели, номера месяца, даты понедельника, количества недель в месяце
+# 
+# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+alltimeHeader <- alltimeHeader[ ,3:ncol(alltimeHeader)]
+alltimeHeaderNextYear <- alltimeHeaderNextYear[ ,3:ncol(alltimeHeaderNextYear)]
+
+
+
+# БЛОК первоначальный
+# time <-45 #присваиваем номер недели для примера
+# num<-c (((time+2)-20):52, 1:((time+2)-21))
+# in1<-match(1,num)
+# #in52<-match(52,num)
+# num[1:(in1-1)]<-c((52-(in1-2)):52)
+# weeklist<-num[1:52]
+
+time <-weekReport #присваиваем номер недели для примера (45)
+num<-c (((time+2)-25):52, 1:((time+2)-26))
+in1<-match(1,num)
+#in52<-match(52,num)
+num[1:(in1-1)]<-c((52-(in1-2)):52)
+weeklist<-num[1:52]
+
+
+
+#формируем "заготовку" в загловках колонок номера недель
+alltimeHeaderMix<- alltimeHeader #общий график на 2 года
+colnames(alltimeHeaderMix)<- c(weeklist)
+alltimeHeaderMix [ , ]<-0
+
+
+endYear<- ifelse(match(52,weeklist)>= match(time,weeklist),
+                 thisyear<-c(match(time,weeklist):match(52,weeklist)),
+                 thisyear<-c(match(time,weeklist):length(weeklist), c(1:match(52,weeklist))))
+
+
+#alltimeHeaderMix <- alltimeHeaderMix[ ,3:ncol(alltimeHeaderMix)]
+
+
+
+
+# end недели, относящиеся к текущему году
+# setdiff(num, end)  недели, относящиеся к следующему году
+# alltimeHeaderMix[ ,thisyear+2] <- alltimeHeader [ , names (alltimeHeaderMix) [thisyear+2]]
+# alltimeHeaderMix[ ,setdiff(as.numeric(names(alltimeHeaderMix)[3:ncol(alltimeHeaderMix)]), thisyear+2) ] <- alltimeHeaderNextYear [ , match(nextweeknum, colnames(alltimeHeaderNextYear))]
+
+
+#приравниваем значения к номерам недель ТЕКУЩЕГО года
+for (i in thisyear ) {
+  #номер недели определяем по номеру колонки
+  weeknum<-as.numeric(names (alltimeHeaderMix) [ i]) #+2
+  
+  alltimeHeaderMix [ ,i]<- alltimeHeader[ ,match(weeknum, names(alltimeHeader))] #
+}
+
+
+
+
+#номера колонок, которым надо присвоит значения следующего года
+nextcolnum <- setdiff(as.numeric(names(alltimeHeaderMix)), thisyear) #+2
+
+
+#приравниваем значения к номерам недель СЛЕДУЮЩЕГО года
+for (i in nextcolnum ) {
+  #номер недели определяем по номеру колонки
+  nextweeknum<-as.numeric(names(alltimeHeaderMix)[1:ncol(alltimeHeaderMix)][i])
+  
+  alltimeHeaderMix [ ,i]<- alltimeHeaderNextYear[ ,match(nextweeknum, names(alltimeHeaderNextYear))] #
+}
+
+
+
+
+
+alltimeHeader <- alltimeHeaderMix
+
+# OrdersMatrix2 <- OrdersMatrix
+# SalesMatrix2 <- SalesMatrix
+# StockMatrix2 <- StockMatrix
+# colnames(alltimeHeaderMix)
+# 
+# #присваиваем значения в новой структуре номеров недель
+# for (i in 1:ncol(OrdersMatrix)) {
+#   
+#   colnames (OrdersMatrix2) <- colnames(alltimeHeaderMix)
+#   OrdersMatrix2 [,match(i, colnames(OrdersMatrix2))] <- OrdersMatrix[ , match(i, colnames(OrdersMatrix))]
+#   OrdersMatrix <- OrdersMatrix2
+#   
+#  
+#   colnames (SalesMatrix2) <- colnames(alltimeHeaderMix)
+#   SalesMatrix2 [ ,match(i, colnames(SalesMatrix2))] <- SalesMatrix[ , match(i, colnames(SalesMatrix))]
+#   SalesMatrix <- SalesMatrix2
+#   
+#   colnames (StockMatrix2) <- colnames(alltimeHeaderMix)
+#   StockMatrix2 [ ,match(i, colnames(StockMatrix2))] <- StockMatrix[ , match(i, colnames(StockMatrix))]
+#   StockMatrix <- StockMatrix2
+#   
+# }
+# 
+# time<-20
+# 
+# names(report) [4:ncol(report)]<-names(alltimeHeaderMix)
+
+
+
+
+
+#
+#  Корректный вариант для ПКИ
+#
+
+
+StockMatrix2 <- StockMatrix
+SalesMatrix2 <- SalesMatrix
+OrdersMatrix2 <- OrdersMatrix
+
+for (i in 1:ncol(OrdersMatrix) ) {
+  
+  colnames (StockMatrix2) <- colnames(alltimeHeaderMix)
+  StockMatrix2 [ ,match(i, colnames(StockMatrix2))] <- StockMatrix[ , match(i, colnames(StockMatrix))]
+  
+  
+  colnames (SalesMatrix2) <- colnames(alltimeHeaderMix)
+  SalesMatrix2 [ ,match(i, colnames(SalesMatrix2))] <- SalesMatrix[ , match(i, colnames(SalesMatrix))]
+  
+  
+  colnames (OrdersMatrix2) <- colnames(alltimeHeaderMix)
+  OrdersMatrix2 [,match(i, colnames(OrdersMatrix2))] <- OrdersMatrix[ , match(i, colnames(OrdersMatrix))]
+  
+  
+}
+
+StockMatrix <- StockMatrix2
+SalesMatrix <- SalesMatrix2
+OrdersMatrix <- OrdersMatrix2
+
+# на 2 меньше, чем колонка с текущей неделей
+time<-match(weekReport, colnames(alltimeHeader)) -2
+
+rat<-stockTurnover(StockMatrix,SalesMatrix,OrdersMatrix, ParametersMatrix, time)
+
+
+
+NamesMatrix<-as.data.frame(matrix(nrow=nrow(rat), ncol=2))
+NamesMatrix<- weeklyStock[rep(row.names(weeklyStock), 3), 1:2]
+
+statusMatrix<-as.data.frame(matrix(nrow=nrow(rat), ncol=1))
+statusMatrix[1:nrow(rat)/3, ]<-"остатки"
+statusMatrix[nrow(rat)/3+2:nrow(rat)/3*2, ]<-"заказать"
+statusMatrix[(nrow(rat)/3*2+1):nrow(rat), ]<- "в пути"
+
+
+report<-cbind(NamesMatrix,statusMatrix, rat)
+
+# округляем
+report [ 4: ncol(report)] <- round (report [ 4: ncol(report)], digits = 0)
+
+
+#присвоить значения колонкам
+names(report) [4:ncol(report)]<-names(alltimeHeaderMix)
+currrentWeek<-which(colnames(report)%in% weekReport)
+report<-  report[ , c(1,2, 3, c(currrentWeek:(currrentWeek+20)))]
+
+
+
+# 
+# конец блока "перехода года" для ПКИ
+#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+write.csv(report, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/report.csv")
+
+# 
+report$sum<- rowSums (report [, 4:8]) 
+#report[report=="0"]<- ""
+reportOrders<-report  [ (nrow(rat)/3+2) :(nrow(rat)/3*2), ]
+
+
+# library(dplyr)    
+# reportOrdersFilter<- filter(reportOrders, sum > 1)
+
+reportOrdersFilterWeek <- subset(reportOrders, reportOrders [ ,4] > 1) [ , c(1:4)]
+reportOrdersFilter <- subset(reportOrders, sum > 1) [ , c(1:8)]
+
+report[report=="0"]<- ""
+reportOrdersFilter[reportOrdersFilter=="0"]<- ""
+
+row.names(reportOrdersFilter) <- NULL
+row.names(reportOrdersFilterWeek) <- NULL
+
+
+write.csv(reportOrdersFilter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/OrdersFilter.csv")
+write.csv(reportOrdersFilterWeek, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/reportOrdersFilterWeek.csv")
+
+
+
+# отчет по "излишкам" ОС, вложенных в запасы
+# загружаем данные по себестоимости
+extraStock<- read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/себестоимость.xls")
+extraStock<- extraStock [1:nrow(extraStock), c(2,3,ncol(extraStock))]
+colnames(extraStock)<- c("code", "name", "price")
+extraStock<- extraStock [4:nrow(extraStock), ]
+
+extraStock [,1]<- as.numeric (extraStock [,1])
+bg<-  report[1:(nrow(report)/3), c(1,2,4) ]
+
+extraMoney<-merge(bg, extraStock, by ="code", all.x= TRUE)
+extraMoney [ ,5]<- as.numeric(extraMoney[ ,5])
+
+extraMoney$Стоимость <- as.numeric(extraMoney[ ,3]) * extraMoney [ ,5]
+
+# 
+surplusConsumption <- read.csv ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/потребление ПКИ 2.csv" )
+
+extraMoney<-merge(extraMoney, surplusConsumption, by ="code", all.x= TRUE)
+extraMoney<- extraMoney [ , c(1,2,3,5,6,9)]
+extraMoney[is.na(extraMoney)]<-0.001
+colnames(extraMoney) <- c("code", "наименование", "остаток", "цена", "стоимость", "потребление" )
+extraMoney$остаток <- as.numeric(extraMoney$остаток)
+extraMoney$потребление <- as.numeric(extraMoney$потребление)
+
+extraMoney$оборачиваемость <- as.numeric(extraMoney$остаток)/ as.numeric(extraMoney$потребление)
+
+#стоимость запасов превышающих 2 месяца потребления
+extraMoney$излишек <- round((extraMoney$остаток- extraMoney$потребление * 2) * extraMoney$цена)
+
+
+extraMoney<- extraMoney [order(-extraMoney$излишек),] 
+extraMoney[is.na(extraMoney)]<-0
+
+# выделяем только "реальные" излишки
+extraMoneyFlter <- subset(extraMoney, extraMoney$излишек > 0) 
+
+
+write.csv(extraMoneyFlter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/extramoney.csv")
+
+#общая сумма излишков
+sum(extraMoneyFlter$излишек)
+
+# бюджет на закупку
+
+price <- extraMoney [ ,c(1,2,4)]
+
+# таблица с планами на закупу и ценами
+rr <- merge(report [(nrow(rat)/3+2):(nrow(rat)/3*2+1), ], price, by ="code", all.x= TRUE)
+ll<-as.data.frame(rr[ , 4:(ncol(rr)-3)])
+
+# преобразовываем в числовой формат
+for (i in 1:ncol(ll) ) {
+  ll[ ,i] <- as.numeric(ll[ ,i])
+}
+
+
+budget<- ll* round(rr [ , ncol(rr)])
+
+budget <- cbind(rr[,1:2], budget)
+budget[is.na(budget)]<-0
+totalcolsum<-  c("", colSums(Filter(is.numeric, budget)))
+totalcolsum<-formatC(as.numeric(totalcolsum[3:length(totalcolsum)]), format="d", big.mark=',')
+
+totalcolsum<-c("", "Сумма выплат поставщикам за неделю ",totalcolsum)
+
+budget<- rbind (totalcolsum, budget)
+
+
+
+
+
+write.csv(budget, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/budget.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##Получаем остатки для Московского склада
+##получить номер колонки заданного склада
+##
+library(readxl)
+library(readr)
+sat2[is.na(sat2)]<-0
+
+warehouseStockMoscow<-match("Москва продажи (регионы)", colnames(sat2))
+stockComponentsMoscow<-sat2[,c(4,6,warehouseStockMoscow)]
+names(stockComponentsMoscow)<-c("code", "item")
+
+stockComponentsMoscow[is.na(stockComponentsMoscow)]<-0
+
+
+warehouseStockMoscowBranch<-match("Москва, Склад продажи", colnames(sat2))
+warehouseStockMoscowTransit<-match("Москва в Пути (филиал)", colnames(sat2))
+# 
+# 
+# #парсинг даты отчета по остаткам
+# date<-names(allStock)[1]
+# library(stringr)
+# dateReport<-str_sub(date, start= -8)
+# 
+# weekReport<-round(as.numeric(
+#   difftime(strptime(dateReport, format = "%d.%m.%y"),
+#            strptime("01.01.2015", format = "%d.%m.%Y"), units="weeks") +1), digits=0)
+
+#присвоили номер недели текущим остаткам
+names(stockComponentsMoscow)[3]<-weekReport
+
+
+#вычесть из остатков резервы и добавить 
+stockComponentsMoscow[ ,3]<- sat2[ ,warehouseStockMoscow]-sat2[ ,warehouseStockMoscow +1]+sat2[ ,warehouseStockMoscowBranch] - sat2[ ,warehouseStockMoscowBranch+1] + sat2[ ,warehouseStockMoscowTransit] - sat2[ ,warehouseStockMoscowTransit +1]
+
+
+stockComponentsMoscow[is.na(stockComponentsMoscow)]<-0
+#write.csv(stockComponentsMoscow, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/stockMoscow.сsv")
+
+
+
+# Загружаем перечень готовой продукции
+finishedGoodsList<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/finishedGoodsList.xls")
+colnames(finishedGoodsList)<- c ("code", "item")
+
+
+#создаем заготовку 52-недельной матриы
+currentFinishedStock<-as.data.frame(matrix(nrow=nrow(finishedGoodsList), ncol=54))
+currentFinishedStock[,1:2]<-finishedGoodsList[,1:2]
+names(currentFinishedStock)<-c("code", "item", c(1:52))
+
+# получаем текущие остатки для Москвы и очищаем данные
+weeklyStockMoscow<-merge(currentFinishedStock, stockComponentsMoscow, by ="code", all.x= TRUE)
+
+weeklyStockMoscow [ ,weekReport+2]<-weeklyStockMoscow [,56]
+weeklyStockMoscow <- weeklyStockMoscow [ , 1:54]
+weeklyStockMoscow[is.na(weeklyStockMoscow)]<-0
+colnames(weeklyStockMoscow)[3:54] <- c (1:52)
+
+#загружаем параметры товародвижения (страх. запас, размер заказа и проч), а также план продаж
+salesMoscow<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Moscow sales and parameters.xls")
+
+
+
+
+
+
+
+
+##
+##
+##
+##
+## загрузка плана продаж Москвы и шаблона 1С, а не из файла
+
+
+# загрузка плана продаж на ТЕКУЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж МСК-", month(Sys.Date()), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesMoscow<- merge(salesMoscow, t, by ="code", all.x= TRUE)
+salesMoscow[is.na(salesMoscow)]<-0
+
+#в заготовке меняем навзания колонок
+colnames(salesMoscow) [c(6:57)] <-colnames(alltimeHeader)
+
+#номера колонок, относящихся к ТЕКУЩЕМУ месяцу
+colMonth<- which (alltimeHeader[1,] %in% month(Sys.Date()) )
+# присваиваем потребляемые количества соответствущим неделям ТЕКУЩЕГО месяца
+salesMoscow [ ,colMonth+5 ]<- round(salesMoscow [ ,59] /length(colMonth))
+salesMoscow <- salesMoscow [ ,1:57]
+
+
+
+
+# загрузка плана продаж на СЛЕДУЮЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж МСК-", 
+           ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesMoscow<- merge(salesMoscow, t, by ="code", all.x= TRUE)
+salesMoscow[is.na(salesMoscow)]<-0
+
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12)  )
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesMoscow [ ,colMonth+5 ]<- round(salesMoscow [ ,59] /length(colMonth))
+salesMoscow <- salesMoscow [ ,1:57]
+
+
+
+
+
+
+# загрузка плана продаж через 2 месяца
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж МСК-", 
+           ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesMoscow<- merge(salesMoscow, t, by ="code", all.x= TRUE)
+salesMoscow[is.na(salesMoscow)]<-0
+
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12)  )
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesMoscow [ ,colMonth+5 ]<- round(salesMoscow [ ,59] /length(colMonth))
+salesMoscow <- salesMoscow [ ,1:57]
+
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+#
+
+
+
+paramMoscow<- salesMoscow [ ,c (2, 1, 4, 5, 3)]
+
+colnames(paramMoscow) <- c("item", "code", "safety stock", "order q-ty", "lead time")
+
+salesMoscow<- salesMoscow [ , c(2,1, 6:57) ]
+colnames(salesMoscow) [3:54]<- c("1":"52")
+
+
+# Создать матрицы в одинаковом порядке позиций
+paramMoscow<-merge(currentFinishedStock, paramMoscow, by ="code", all.x= TRUE)
+salesMoscow<-merge(currentFinishedStock, salesMoscow, by ="code", all.x= TRUE)
+salesMoscow[is.na(salesMoscow)]<-0
+
+
+
+
+#перейти к расчету year transition
+
+
+
+
+
+
+
+
+# получили 4 матрицы для передачи в RCPP
+StockMatrixMSK<-as.matrix(weeklyStockMoscow [,3:54])
+OrdersMatrixMSK<-matrix(nrow=nrow(currentFinishedStock), ncol=52)
+OrdersMatrixMSK[is.na(OrdersMatrixMSK)]<-0
+SalesMatrixMSK<-as.matrix(salesMoscow[ ,56:107])
+ParametersMatrixMSK<-as.matrix(paramMoscow[ ,c(56:58)])
+
+#убираем некорретные названия колонок, оставшиеся после merge
+colnames(SalesMatrixMSK) <-colnames(alltimeHeader)
+colnames(StockMatrixMSK) <-c(1:52)
+colnames(OrdersMatrixMSK) <-c(1:52)
+
+StockMatrix2 <- StockMatrixMSK
+SalesMatrix2 <- SalesMatrixMSK
+OrdersMatrix2 <- OrdersMatrixMSK
+
+for (i in 1:ncol(OrdersMatrixMSK) ) {
+  
+  colnames (StockMatrix2) <- colnames(alltimeHeaderMix)
+  StockMatrix2 [ ,match(i, colnames(StockMatrix2))] <- StockMatrixMSK[ , match(i, colnames(StockMatrixMSK))]
+  
+  
+#   colnames (SalesMatrix2) <- colnames(alltimeHeaderMix)
+#   SalesMatrix2 [ ,match(i, colnames(SalesMatrix2))] <- SalesMatrixMSK[ , match(i, colnames(SalesMatrixMSK))]
+#   
+  
+  colnames (OrdersMatrix2) <- colnames(alltimeHeaderMix)
+  OrdersMatrix2 [,match(i, colnames(OrdersMatrix2))] <- OrdersMatrixMSK[ , match(i, colnames(OrdersMatrixMSK))]
+  
+  
+}
+
+StockMatrixMSK <- StockMatrix2
+SalesMatrixMSK <- SalesMatrix2
+OrdersMatrixMSK <- OrdersMatrix2
+
+# на 2 меньше, чем колонка с текущей неделей
+time<-match(weekReport, colnames(alltimeHeader)) -2
+
+
+#расчет товаропотока для Москвы
+flowMSK<-round(stockTurnover(StockMatrixMSK,SalesMatrixMSK,OrdersMatrixMSK, ParametersMatrixMSK, time))
+
+
+
+# присваиваем названия и статус для каждой позиции
+NamesMatrix<-as.data.frame(matrix(nrow=nrow(flowMSK), ncol=2))
+NamesMatrix<- weeklyStockMoscow[rep(row.names(weeklyStockMoscow), 3), 1:2]
+
+statusMatrix<-as.data.frame(matrix(nrow=nrow(flowMSK), ncol=1))
+statusMatrix[1:nrow(flowMSK)/3, ]<-"остатки"
+statusMatrix[nrow(flowMSK)/3+2:nrow(flowMSK)/3*2, ]<-"заказы"
+statusMatrix[(nrow(flowMSK)/3*2+1):nrow(flowMSK), ]<- "в пути"
+
+
+
+##
+##Полная таблица с данными по Москве
+##
+reportMSK<-cbind(NamesMatrix,statusMatrix, flowMSK)
+
+
+#присвоить значения колонкам
+names(reportMSK) [4:ncol(reportMSK)]<-names(alltimeHeaderMix)
+
+
+
+
+
+# # получили 4 матрицы для передачи в RCPP
+# StockMatrixMSK<-as.matrix(weeklyStockMoscow [,3:54])
+# OrdersMatrixMSK<-matrix(nrow=nrow(currentFinishedStock), ncol=52)
+# OrdersMatrixMSK[is.na(OrdersMatrixMSK)]<-0
+# SalesMatrixMSK<-as.matrix(salesMoscow[ ,56:107])
+# ParametersMatrixMSK<-as.matrix(paramMoscow[ ,c(56:58)])
+# 
+# 
+# #расчет товаропотока для Москвы
+# flowMSK<-round(stockTurnover(StockMatrixMSK,SalesMatrixMSK,OrdersMatrixMSK, ParametersMatrixMSK, time))
+# 
+# 
+# 
+# 
+# # присваиваем названия и статус для каждой позиции
+# NamesMatrix<-as.data.frame(matrix(nrow=nrow(flowMSK), ncol=2))
+# NamesMatrix<- weeklyStockMoscow[rep(row.names(weeklyStockMoscow), 3), 1:2]
+# 
+# statusMatrix<-as.data.frame(matrix(nrow=nrow(flowMSK), ncol=1))
+# statusMatrix[1:nrow(flowMSK)/3, ]<-"остатки"
+# statusMatrix[nrow(flowMSK)/3+2:nrow(flowMSK)/3*2, ]<-"заказы"
+# statusMatrix[(nrow(flowMSK)/3*2+1):nrow(flowMSK), ]<- "в пути"
+# 
+# 
+# 
+# ##
+# ##Полная таблица с данными по Москве
+# ##
+# reportMSK<-cbind(NamesMatrix,statusMatrix, flowMSK)
+write.csv(reportMSK [, c(1,2,3, which (colnames(reportMSK) %in% (weekReport) ) :ncol(reportMSK))], "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/reportMSK.csv")
+
+
+
+
+
+
+
+# 
+# 
+# 
+# аналогично формируем отчет по товародвижению для Санкт-Петербурга
+# 
+# 
+# 
+
+
+
+warehouseStockSPb<-match("Санкт-Петербург,Склад продажи", colnames(sat2))
+stockComponentsSPb<-sat2[,c(4,6,warehouseStockSPb)] # ранее стояло 4,6, warehouseStockMoscow
+names(stockComponentsSPb)<-c("code", "item")
+
+stockComponentsSPb[is.na(stockComponentsSPb)]<-0
+
+
+
+
+#присваиваем номер недели
+names(stockComponentsSPb)[3]<-weekReport
+
+
+#вычесть из остатков резервы и добавить 
+stockComponentsSPb[ ,3]<- sat2[ ,warehouseStockSPb]-sat2[ ,warehouseStockSPb +1]
+
+
+stockComponentsSPb[is.na(stockComponentsSPb)]<-0
+#write.csv(stockComponentsMoscow, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/stockMoscow.сsv")
+
+
+
+# Загружаем перечень готовой продукции
+finishedGoodsList<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/finishedGoodsList.xls")
+colnames(finishedGoodsList)<- c ("code", "item")
+
+
+#создаем заготовку 52-недельной матриы
+currentFinishedStock<-as.data.frame(matrix(nrow=nrow(finishedGoodsList), ncol=54))
+currentFinishedStock[,1:2]<-finishedGoodsList[,1:2]
+names(currentFinishedStock)<-c("code", "item", c(1:52))
+
+# получаем текущие остатки для Москвы и очищаем данные
+weeklyStockSPb<-merge(currentFinishedStock, stockComponentsSPb, by ="code", all.x= TRUE)
+
+weeklyStockSPb [ ,weekReport+2]<-weeklyStockSPb [,56]
+weeklyStockSPb <- weeklyStockSPb [ , 1:54]
+weeklyStockSPb[is.na(weeklyStockSPb)]<-0
+colnames(weeklyStockSPb)[3:54] <- c (1:52)
+
+
+
+
+#загружаем параметры товародвижения (страх. запас, размер заказа и проч), а также план продаж
+salesSPb<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/SPb sales and parameters.xls")
+
+
+
+
+
+
+
+
+##
+##
+##
+##
+## загрузка плана продаж Санкт-Петербурга и шаблона 1С, а не из файла
+
+
+# загрузка плана продаж на ТЕКУЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж СПб-", month(Sys.Date()), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesSPb<- merge(salesSPb, t, by ="code", all.x= TRUE)
+salesSPb[is.na(salesSPb)]<-0
+
+#в заготовке меняем навзания колонок
+colnames(salesSPb) [c(6:57)] <-colnames(alltimeHeader)
+
+#номера колонок, относящихся к ТЕКУЩЕМУ месяцу
+colMonth<- which (alltimeHeader[1,] %in% month(Sys.Date()) )
+# присваиваем потребляемые количества соответствущим неделям ТЕКУЩЕГО месяца
+salesSPb [ ,colMonth+5 ]<- round(salesSPb [ ,59] /length(colMonth))
+salesSPb <- salesSPb [ ,1:57]
+
+
+
+
+# загрузка плана продаж на СЛЕДУЮЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж СПб-", 
+           ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesSPb<- merge(salesSPb, t, by ="code", all.x= TRUE)
+salesSPb[is.na(salesSPb)]<-0
+
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12)  )
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesSPb [ ,colMonth+5 ]<- round(salesSPb [ ,59] /length(colMonth))
+salesSPb <- salesSPb [ ,1:57]
+
+
+
+
+
+
+# загрузка плана продаж через 2 месяца
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж СПб-", 
+           ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesSPb<- merge(salesSPb, t, by ="code", all.x= TRUE)
+salesSPb[is.na(salesSPb)]<-0
+
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12)  )
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesSPb [ ,colMonth+5 ]<- round(salesSPb [ ,59] /length(colMonth))
+salesSPb <- salesSPb [ ,1:57]
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+#
+
+paramSPb<- salesSPb [ ,c (2,1, 4, 5, 3)]
+
+colnames(paramSPb) <- c("item", "code", "safety stock", "order q-ty", "lead time")
+
+salesSPb<- salesSPb [ , c(2,1, 6:57) ]
+colnames(salesSPb) [3:54]<- c("1":"52")
+
+
+
+# Создать матрицы в одинаковом порядке позиций
+paramSPb<-merge(currentFinishedStock, paramSPb, by ="code", all.x= TRUE)
+salesSPb<-merge(currentFinishedStock, salesSPb, by ="code", all.x= TRUE)
+salesSPb[is.na(salesSPb)]<-0
+
+
+# 
+# # получили 4 матрицы для передачи в RCPP
+# StockMatrixSPb<-as.matrix(weeklyStockSPb [,3:54])
+# OrdersMatrixSPb<-matrix(nrow=nrow(currentFinishedStock), ncol=52)
+# OrdersMatrixSPb[is.na(OrdersMatrixSPb)]<-0
+# SalesMatrixSPb<-as.matrix(salesSPb[ ,56:107])
+# ParametersMatrixSPb<-as.matrix(paramSPb[ ,c(56:58)])
+# 
+# 
+# 
+# #расчет товаропотока для СПб
+# flowSPb<-round(stockTurnover(StockMatrixSPb,SalesMatrixSPb,OrdersMatrixSPb, ParametersMatrixSPb, time))
+# 
+# 
+# 
+# 
+# # присваиваем названия и статус для каждой позиции
+# NamesMatrix<-as.data.frame(matrix(nrow=nrow(flowSPb), ncol=2))
+# NamesMatrix<- weeklyStockSPb[rep(row.names(weeklyStockSPb), 3), 1:2]
+# 
+# statusMatrix<-as.data.frame(matrix(nrow=nrow(flowSPb), ncol=1))
+# statusMatrix[1:nrow(flowSPb)/3, ]<-"остатки"
+# statusMatrix[nrow(flowSPb)/3+2:nrow(flowSPb)/3*2, ]<-"заказы"
+# statusMatrix[(nrow(flowSPb)/3*2+1):nrow(flowSPb), ]<- "в пути"
+# 
+# 
+# ##
+# ##Полная таблица с данными по Санкт-Петербургу
+# ##
+# reportSPb<-cbind(NamesMatrix,statusMatrix, flowSPb)
+
+
+
+# получили 4 матрицы для передачи в RCPP
+StockMatrixSPb<-as.matrix(weeklyStockSPb [,3:54])
+OrdersMatrixSPb<-matrix(nrow=nrow(currentFinishedStock), ncol=52)
+OrdersMatrixSPb[is.na(OrdersMatrixSPb)]<-0
+SalesMatrixSPb<-as.matrix(salesSPb[ ,56:107])
+ParametersMatrixSPb<-as.matrix(paramSPb[ ,c(56:58)])
+
+#убираем некорретные названия колонок, оставшиеся после merge
+colnames(SalesMatrixSPb) <-colnames(alltimeHeader)
+colnames(StockMatrixSPb) <-c(1:52)
+colnames(OrdersMatrixSPb) <-c(1:52)
+
+StockMatrix2 <- StockMatrixSPb
+SalesMatrix2 <- SalesMatrixSPb
+OrdersMatrix2 <- OrdersMatrixSPb
+
+for (i in 1:ncol(OrdersMatrixSPb) ) {
+  
+  colnames (StockMatrix2) <- colnames(alltimeHeaderMix)
+  StockMatrix2 [ ,match(i, colnames(StockMatrix2))] <- StockMatrixSPb[ , match(i, colnames(StockMatrixSPb))]
+  
+  
+#   colnames (SalesMatrix2) <- colnames(alltimeHeaderMix)
+#   SalesMatrix2 [ ,match(i, colnames(SalesMatrix2))] <- SalesMatrixSPb[ , match(i, colnames(SalesMatrixSPb))]
+#   
+  
+  colnames (OrdersMatrix2) <- colnames(alltimeHeaderMix)
+  OrdersMatrix2 [,match(i, colnames(OrdersMatrix2))] <- OrdersMatrixSPb[ , match(i, colnames(OrdersMatrixSPb))]
+  
+  
+}
+
+StockMatrixSPb <- StockMatrix2
+SalesMatrixSPb <- SalesMatrix2
+OrdersMatrixSPb <- OrdersMatrix2
+
+# на 2 меньше, чем колонка с текущей неделей
+time<-match(weekReport, colnames(alltimeHeader)) -2
+
+
+#расчет товаропотока для Москвы
+flowSPb<-round(stockTurnover(StockMatrixSPb,SalesMatrixSPb,OrdersMatrixSPb, ParametersMatrixSPb, time))
+
+
+
+# присваиваем названия и статус для каждой позиции
+NamesMatrix<-as.data.frame(matrix(nrow=nrow(flowSPb), ncol=2))
+NamesMatrix<- weeklyStockSPb[rep(row.names(weeklyStockSPb), 3), 1:2]
+
+statusMatrix<-as.data.frame(matrix(nrow=nrow(flowSPb), ncol=1))
+statusMatrix[1:nrow(flowSPb)/3, ]<-"остатки"
+statusMatrix[nrow(flowSPb)/3+2:nrow(flowSPb)/3*2, ]<-"заказы"
+statusMatrix[(nrow(flowSPb)/3*2+1):nrow(flowSPb), ]<- "в пути"
+
+
+
+##
+##Полная таблица с данными по СПб
+##
+reportSPb<-cbind(NamesMatrix,statusMatrix, flowSPb)
+
+
+#присвоить значения колонкам
+names(reportSPb) [4:ncol(reportSPb)]<-names(alltimeHeaderMix)
+write.csv(reportSPb [, c(1,2,3, which (colnames(reportSPb) %in% (weekReport) ) :ncol(reportSPb))], "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/reportSPb.csv")
+
+
+
+
+# 
+# 
+# 
+# аналогично формируем отчет по товародвижению для Новосибирска
+# 
+# 
+# 
+
+warehouseStockNSK<-match("Новосибирск, Склад продажи", colnames(sat2))
+stockComponentsNSK<-sat2[,c(4,6,warehouseStockNSK)]
+names(stockComponentsNSK)<-c("code", "item")
+
+stockComponentsNSK[is.na(stockComponentsNSK)]<-0
+
+warehouseStockNSKBranch<-match("Склад Транзитный  для НВС", colnames(sat2))
+warehouseStockNSKTransit<-match("ТРАНЗИТНЫЙ СКЛАД", colnames(sat2))
+
+#присваиваем номер недели
+names(stockComponentsNSK)[3]<-weekReport
+
+
+#вычесть из остатков резервы и добавить 
+stockComponentsNSK[ ,3]<- sat2[ ,warehouseStockNSK ]-sat2[ ,warehouseStockNSK +1]+sat2[ ,warehouseStockNSKBranch] - sat2[ ,warehouseStockNSKBranch+1] + sat2[ ,warehouseStockNSKTransit] - sat2[ ,warehouseStockNSKTransit +1]
+
+
+
+stockComponentsNSK[is.na(stockComponentsNSK)]<-0
+#write.csv(stockComponentsMoscow, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/stockMoscow.сsv")
+
+
+
+# Загружаем перечень готовой продукции
+finishedGoodsList<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/finishedGoodsList.xls")
+colnames(finishedGoodsList)<- c ("code", "item")
+
+
+#создаем заготовку 52-недельной матриы
+currentFinishedStock<-as.data.frame(matrix(nrow=nrow(finishedGoodsList), ncol=54))
+currentFinishedStock[,1:2]<-finishedGoodsList[,1:2]
+names(currentFinishedStock)<-c("code", "item", c(1:52))
+
+# получаем текущие остатки для Москвы и очищаем данные
+weeklyStockNSK<-merge(currentFinishedStock, stockComponentsNSK, by ="code", all.x= TRUE)
+
+weeklyStockNSK [ ,weekReport+2]<-weeklyStockNSK [,56]
+weeklyStockNSK <- weeklyStockNSK [ , 1:54]
+weeklyStockNSK[is.na(weeklyStockNSK)]<-0
+colnames(weeklyStockNSK)[3:54] <- c (1:52)
+
+
+
+
+#загружаем параметры товародвижения (страх. запас, размер заказа и проч), а также план продаж
+salesNSK<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/NSK sales and parameters.xls")
+
+
+##
+##
+##
+##
+## загрузка плана продаж Новосибирска и шаблона 1С, а не из файла
+
+
+# загрузка плана продаж на ТЕКУЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж НСК-", month(Sys.Date()), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesNSK<- merge(salesNSK, t, by ="code", all.x= TRUE)
+salesNSK[is.na(salesNSK)]<-0
+
+#в заготовке меняем навзания колонок
+colnames(salesNSK) [c(6:57)] <-colnames(alltimeHeader)
+
+#номера колонок, относящихся к ТЕКУЩЕМУ месяцу
+colMonth<- which (alltimeHeader[1,] %in% month(Sys.Date()) )
+# присваиваем потребляемые количества соответствущим неделям ТЕКУЩЕГО месяца
+salesNSK [ ,colMonth+5 ]<- round(salesNSK [ ,60] /length(colMonth))
+salesNSK <- salesNSK [ ,1:57]
+
+
+
+
+# загрузка плана продаж на СЛЕДУЮЩИЙ месяц
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж НСК-", 
+           ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesNSK<- merge(salesNSK, t, by ="code", all.x= TRUE)
+salesNSK[is.na(salesNSK)]<-0
+
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<-which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12)  )
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesNSK [ ,colMonth+5 ]<- round(salesNSK [ ,59] /length(colMonth))
+salesNSK <- salesNSK [ ,1:57]
+
+
+
+
+
+
+# загрузка плана продаж через 2 месяца
+
+mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж НСК-", 
+           ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12), ".xls", sep="")
+t<-read_excel(mu)
+colnames(t)<- t [2,] 
+t<- t [3:nrow(t), c(2,4,6)]
+colnames(t)<- c("code", "name", "quantity")
+t[, 1]<- as.numeric(t[ ,1])
+t[, 3]<- as.numeric(t[ ,3])
+
+salesNSK<- merge(salesNSK, t, by ="code", all.x= TRUE)
+salesNSK[is.na(salesNSK)]<-0
+
+
+#номера колонок, относящихся к CЛЕДУЮЩЕМУ месяцу
+colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12)  )
+# присваиваем потребляемые количества соответствущим неделям СЛЕДУЮЩЕГО месяца
+salesNSK [ ,colMonth+5 ]<- round(salesNSK [ ,59] /length(colMonth))
+salesNSK <- salesNSK [ ,1:57]
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+#
+
+paramNSK<- salesNSK [ ,c (2,1, 4, 5, 3)]
+
+colnames(paramNSK) <- c("item", "code", "safety stock", "order q-ty", "lead time")
+
+salesNSK<- salesNSK [ , c(2,1, 6:57) ]
+#colnames(salesNSK) [3:54]<- c("1":"52")
+
+
+
+# Создать матрицы в одинаковом порядке позиций
+paramNSK<-merge(currentFinishedStock, paramNSK, by ="code", all.x= TRUE)
+salesNSK<-merge(currentFinishedStock, salesNSK, by ="code", all.x= TRUE)
+salesNSK[is.na(salesNSK)]<-0
+
+
+
+# # получили 4 матрицы для передачи в RCPP
+# StockMatrixNSK<-as.matrix(weeklyStockNSK [,3:54])
+# OrdersMatrixNSK<-matrix(nrow=nrow(currentFinishedStock), ncol=52)
+# OrdersMatrixNSK[is.na(OrdersMatrixNSK)]<-0
+# SalesMatrixNSK<-as.matrix(salesNSK[ ,56:107])
+# ParametersMatrixNSK<-as.matrix(paramNSK[ ,c(56:58)])
+# 
+# 
+# #расчет товаропотока для Москвы
+# flowNSK<-round(stockTurnover(StockMatrixNSK,SalesMatrixNSK,OrdersMatrixNSK, ParametersMatrixNSK, time))
+# 
+# 
+# 
+# 
+# # присваиваем названия и статус для каждой позиции
+# NamesMatrix<-as.data.frame(matrix(nrow=nrow(flowNSK), ncol=2))
+# NamesMatrix<- weeklyStockNSK[rep(row.names(weeklyStockNSK), 3), 1:2]
+# 
+# statusMatrix<-as.data.frame(matrix(nrow=nrow(flowNSK), ncol=1))
+# statusMatrix[1:nrow(flowNSK)/3, ]<-"остатки"
+# statusMatrix[nrow(flowNSK)/3+2:nrow(flowNSK)/3*2, ]<-"заказы"
+# statusMatrix[(nrow(flowNSK)/3*2+1):nrow(flowNSK), ]<- "в пути"
+# 
+# 
+# ##
+# ##Полная таблица с данными по Новосибирску
+# ##
+# reportNSK<-cbind(NamesMatrix,statusMatrix, flowNSK)
+
+
+# получили 4 матрицы для передачи в RCPP
+StockMatrixNSK<-as.matrix(weeklyStockNSK [,3:54])
+OrdersMatrixNSK<-matrix(nrow=nrow(currentFinishedStock), ncol=52)
+OrdersMatrixNSK[is.na(OrdersMatrixNSK)]<-0
+SalesMatrixNSK<-as.matrix(salesNSK[ ,56:107])
+ParametersMatrixNSK<-as.matrix(paramNSK[ ,c(56:58)])
+
+#убираем некорретные названия колонок, оставшиеся после merge
+colnames(SalesMatrixNSK) <-colnames(alltimeHeader)
+colnames(StockMatrixNSK) <-c(1:52)
+colnames(OrdersMatrixNSK) <-c(1:52)
+
+StockMatrix2 <- StockMatrixNSK
+SalesMatrix2 <- SalesMatrixNSK
+OrdersMatrix2 <- OrdersMatrixNSK
+
+for (i in 1:ncol(OrdersMatrixNSK) ) {
+  
+  colnames (StockMatrix2) <- colnames(alltimeHeaderMix)
+  StockMatrix2 [ ,match(i, colnames(StockMatrix2))] <- StockMatrixNSK[ , match(i, colnames(StockMatrixNSK))]
+  
+#   
+#   colnames (SalesMatrix2) <- colnames(alltimeHeaderMix)
+#   SalesMatrix2 [ ,match(i, colnames(SalesMatrix2))] <- SalesMatrixNSK[ , match(i, colnames(SalesMatrixNSK))]
+#   
+  
+  colnames (OrdersMatrix2) <- colnames(alltimeHeaderMix)
+  OrdersMatrix2 [,match(i, colnames(OrdersMatrix2))] <- OrdersMatrixNSK[ , match(i, colnames(OrdersMatrixNSK))]
+  
+  
+}
+
+StockMatrixNSK <- StockMatrix2
+SalesMatrixNSK <- SalesMatrix2
+OrdersMatrixNSK <- OrdersMatrix2
+
+# на 2 меньше, чем колонка с текущей неделей
+time<-match(weekReport, colnames(alltimeHeader)) -2
+
+
+#расчет товаропотока для Москвы
+flowNSK<-round(stockTurnover(StockMatrixNSK,SalesMatrixNSK,OrdersMatrixNSK, ParametersMatrixNSK, time))
+
+
+
+# присваиваем названия и статус для каждой позиции
+NamesMatrix<-as.data.frame(matrix(nrow=nrow(flowNSK), ncol=2))
+NamesMatrix<- weeklyStockNSK[rep(row.names(weeklyStockNSK), 3), 1:2]
+
+statusMatrix<-as.data.frame(matrix(nrow=nrow(flowNSK), ncol=1))
+statusMatrix[1:nrow(flowNSK)/3, ]<-"остатки"
+statusMatrix[nrow(flowNSK)/3+2:nrow(flowNSK)/3*2, ]<-"заказы"
+statusMatrix[(nrow(flowNSK)/3*2+1):nrow(flowNSK), ]<- "в пути"
+
+
+
+##
+##Полная таблица с данными по НСК
+##
+reportNSK<-cbind(NamesMatrix,statusMatrix, flowNSK)
+
+
+#присвоить значения колонкам
+names(reportNSK) [4:ncol(reportNSK)]<-names(alltimeHeaderMix)
+write.csv(reportNSK [, c(1,2,3, which (colnames(reportNSK) %in% (weekReport) ) :ncol(reportNSK))], "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/reportNSK.csv")
+
+##
+##таблица с аггрегированными данными по потребности в товаре по всем 3-м филиалам
+##
+totalProduction <- reportMSK[(nrow(flowMSK)/3+1):(nrow(flowMSK)/3*2), c(4:55)] + reportSPb[(nrow(flowSPb)/3+1):(nrow(flowSPb)/3*2), c(4:55)]+reportNSK[(nrow(flowNSK)/3+1):(nrow(flowNSK)/3*2), c(4:55)]
+totalProduction<- cbind(reportMSK[c(1: (nrow(flowMSK)/3)), c(1,2) ], totalProduction)
+write.csv(totalProduction, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/totalProduction.csv")
+
+
+#сохранить планы продаж как справочную информацию
+salesMoscow<- cbind (salesMoscow[ ,1:2], SalesMatrixMSK)
+salesMoscow [ ,3:ncol(salesMoscow)] <- round (salesMoscow [ ,3:ncol(salesMoscow)], digits=0)
+salesMoscow <- salesMoscow [ , c(1, 2, which (colnames(salesMoscow) %in% (weekReport) ):ncol(salesMoscow))]
+
+salesSPb<- cbind (salesSPb[ ,1:2], SalesMatrixSPb)
+salesSPb [ ,3:ncol(salesSPb)] <- round (salesSPb [ ,3:ncol(salesSPb)], digits=0)
+salesSPb <- salesSPb [ , c(1, 2, which (colnames(salesSPb) %in% (weekReport) ):ncol(salesSPb))]
+
+salesNSK<- cbind (salesNSK[ ,1:2], SalesMatrixNSK)
+salesNSK [ ,3:ncol(salesNSK)] <- round (salesNSK [ ,3:ncol(salesNSK)], digits=0)
+salesNSK <- salesNSK [ , c(1, 2, which (colnames(salesNSK) %in% (weekReport) ):ncol(salesNSK))]
+
+
+write.csv(salesMoscow, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/salesMoscow.csv")
+write.csv(salesSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/salesSPb.csv")
+write.csv(salesNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/salesNSK.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+#перенести получаемый "alltimeHeader" в "mergw tables"
+#
+
+# library (lubridate)
+# library (stringr)
+# 
+# weekBegin<- data.frame(matrix(nrow=1, ncol=52))
+# 
+# 
+# #номер дня недели (функция из lubridate) для текущего года
+# # в строке ниже при смене года заменить на первое января наступающего года (в 2-х местах)
+# 
+# firstMonday<- as.Date(strptime("01.01.2015", format = "%d.%m.%Y"))-(wday(as.Date(strptime("01.01.2015", format = "%d.%m.%Y")))-2)
+# 
+# weekBegin[1]<-firstMonday
+# 
+# 
+# for (i in 1:51 ) {
+#   weekBegin[i+1] = weekBegin[i] +days(7)
+# }
+# 
+# 
+# #РЅРѕРјРµСЂ РјРµСЃСЏС†Р° РґР»СЏ РєР°Р¶РґРѕР№ РЅРµРґРµР»Рё
+# monthBegin<- data.frame(matrix(nrow=1, ncol=52))
+# for (i in 1:52 ) {
+#  
+#   monthBegin[1,i] <- month(as.POSIXlt(weekBegin[1,i], format="%d.%m.%Y"))
+# }
+# 
+# colnames(weekBegin)<-monthBegin[1,]
+# 
+# row<-as.data.frame(matrix(nrow=1,ncol=52))
+# row[is.na(row)]<-0
+# 
+# 
+# 
+# weekBegin3<- rbind(weekBegin [ ,1], row)
+# 
+# 
+# 
+# 
+# 
+# colnames (weekBegin3)<- colnames (weekBegin)
+# 
+# weekBegin3 [2,1] <-1
+# 
+# for (i in 2:52 ) {
+# ifelse ( colnames(weekBegin3)[i] == colnames(weekBegin3)[i-1], weekBegin3 [2,i]<- weekBegin3 [2,i-1]+1, weekBegin3 [2,i]<-1)
+# 
+# }
+# 
+# 
+# 
+# for (i in 1:52 ) {
+#   weekBegin3[1,i] <- as.character(weekBegin[1, i])
+# }
+# 
+# # для приведения размерности в соответствие
+# twocolumns<-as.data.frame(matrix(nrow=2,ncol=2))
+# 
+# alltimeHeader<- cbind(twocolumns, weekBegin3)
+# 
+# #номера месяцев рассчитанных по дате понедельника
+# monthnumber<-as.data.frame(matrix(nrow=1,ncol=54))
+# monthnumber<-colnames(alltimeHeader)
+# alltimeHeader<- rbind(monthnumber, alltimeHeader)
+# 
+# colnames(alltimeHeader)<-c("code", "item.x", c(1:52))
+
+
+##
+## конец блока, который надо перенести в начало кода "merge tables" для распределения по неделям потребления, рассчитанного в 1С
+##
+
+
+
+
+
+
+threecolumns<-as.data.frame(matrix(nrow=3,ncol=2))
+alltimeHeader<- cbind(threecolumns, alltimeHeader)
+colnames(alltimeHeader)<-c("code", "item.x", colnames(alltimeHeader)[3:ncol(alltimeHeader)])
+
+
+
+
+
+
+#
+# весь график производства с указанием (номера недели, номера месяца, даты понедельника, количества недель в месяце)
+#
+totalProductiontime<- rbind(alltimeHeader, totalProduction)
+
+
+# формируем пустую таблицу для потребности по месяцам 
+monthlyProductionPlan<-as.data.frame(matrix(nrow=nrow(finishedGoodsList),ncol=12))
+monthlyProductionPlan[is.na(monthlyProductionPlan)]<-0
+
+
+#проходим по всей таблице понедельных потребностей и складываем потребности, относящиеся к одному месяцу
+
+for (m in 4:nrow(totalProductiontime) ) {
+  
+for (i in 3:53 ) {
+  
+  
+         
+ monthlyProductionPlan [m-3, as.numeric(totalProductiontime [1,i]) ] <- 
+ round(monthlyProductionPlan [m-3, as.numeric(totalProductiontime [1,i]) ] + as.numeric(totalProductiontime [m,i]))#  
+}
+
+}
+
+# monthlyProductionPlan - помесячный план производства
+
+
+itemNames<- totalProductiontime [4:nrow(totalProductiontime), 1:2]
+monthlyProductionPlan<- cbind(itemNames, monthlyProductionPlan)
+
+colnames (monthlyProductionPlan) <- c("code", "item", "янв", "фев", "март", "апр", "май", "июнь", "июль", "август", "сент", "окт", "ноябрь", "дек")
+
+
+#
+# формируем аналогичный план производства помесячно для Москвы
+#
+totalProductiontimeMSK<- rbind(alltimeHeader, reportMSK [(nrow(flowMSK)/3+1):(nrow(flowMSK)/3*2), c(1, 2, 4:55)])
+
+
+
+# формируем пустую таблицу для потребности по месяцам 
+monthlyProductionPlanMSK<-as.data.frame(matrix(nrow=nrow(finishedGoodsList),ncol=12))
+monthlyProductionPlanMSK[is.na(monthlyProductionPlanMSK)]<-0
+
+
+
+for (m in 4:nrow(totalProductiontimeMSK) ) {
+  
+  for (i in 3:53 ) {
+    
+    
+    
+    monthlyProductionPlanMSK [m-3, as.numeric(totalProductiontimeMSK [1,i]) ] <- 
+      round(monthlyProductionPlanMSK [m-3, as.numeric(totalProductiontimeMSK [1,i]) ] + as.numeric(totalProductiontimeMSK [m,i]))#  
+  }
+  
+}
+
+
+itemNames<- totalProductiontimeMSK [4:nrow(totalProductiontimeMSK), 1:2]
+monthlyProductionPlanMSK <- cbind(itemNames, monthlyProductionPlanMSK)
+
+colnames (monthlyProductionPlanMSK) <- c("code", "item", "янв", "фев", "март", "апр", "май", "июнь", "июль", "август", "сент", "окт", "ноябрь", "дек")
+
+
+#
+# формируем аналогичный план производства помесячно для Санкт-Петербурга
+#
+
+totalProductiontimeSPb<- rbind(alltimeHeader, reportSPb [(nrow(flowSPb)/3+1):(nrow(flowSPb)/3*2), c(1, 2, 4:55)])
+
+
+
+# формируем пустую таблицу для потребности по месяцам 
+monthlyProductionPlanSPb<-as.data.frame(matrix(nrow=nrow(finishedGoodsList),ncol=12))
+monthlyProductionPlanSPb[is.na(monthlyProductionPlanSPb)]<-0
+
+
+
+for (m in 4:nrow(totalProductiontimeSPb) ) {
+  
+  for (i in 3:53 ) {
+    
+    
+    
+    monthlyProductionPlanSPb [m-3, as.numeric(totalProductiontimeSPb [1,i]) ] <- 
+      round(monthlyProductionPlanSPb [m-3, as.numeric(totalProductiontimeSPb [1,i]) ] + as.numeric(totalProductiontimeSPb [m,i]))#  
+  }
+  
+}
+
+
+itemNames<- totalProductiontimeSPb [4:nrow(totalProductiontimeSPb), 1:2]
+monthlyProductionPlanSPb <- cbind(itemNames, monthlyProductionPlanSPb)
+
+colnames (monthlyProductionPlanSPb) <- c("code", "item", "янв", "фев", "март", "апр", "май", "июнь", "июль", "август", "сент", "окт", "ноябрь", "дек")
+
+
+#
+# формируем аналогичный план производства помесячно для Новосибирска
+#
+
+totalProductiontimeNSK<- rbind(alltimeHeader, reportNSK [(nrow(flowNSK)/3+1):(nrow(flowNSK)/3*2), c(1, 2, 4:55)])
+
+
+
+# формируем пустую таблицу для потребности по месяцам 
+monthlyProductionPlanNSK<-as.data.frame(matrix(nrow=nrow(finishedGoodsList),ncol=12))
+monthlyProductionPlanNSK[is.na(monthlyProductionPlanNSK)]<-0
+
+
+
+for (m in 4:nrow(totalProductiontimeNSK) ) {
+  
+  for (i in 3:53 ) {
+    
+        
+    monthlyProductionPlanNSK [m-3, as.numeric(totalProductiontimeNSK [1,i]) ] <- 
+      round(monthlyProductionPlanNSK [m-3, as.numeric(totalProductiontimeNSK [1,i]) ] + as.numeric(totalProductiontimeNSK [m,i]))#  
+  }
+  
+}
+
+
+itemNames<- totalProductiontimeNSK [4:nrow(totalProductiontimeNSK), 1:2]
+monthlyProductionPlanNSK <- cbind(itemNames, monthlyProductionPlanNSK)
+
+colnames (monthlyProductionPlanNSK) <- c("code", "item", "янв", "фев", "март", "апр", "май", "июнь", "июль", "август", "сент", "окт", "ноябрь", "дек")
+
+#
+# рассчитываем доли (в %) потребности каждого филиала в общей потребности
+#
+
+partMSK <- monthlyProductionPlanMSK[ , 3:14]/ monthlyProductionPlan[ , 3:14]
+partSPb <- monthlyProductionPlanSPb[ , 3:14]/ monthlyProductionPlan[ , 3:14]
+partNSK <- monthlyProductionPlanNSK[ , 3:14]/ monthlyProductionPlan[ , 3:14]
+
+# присваиваем названиям колонок номера месяцев
+colnames (partMSK) <- c(1:12)
+colnames (partSPb) <- c(1:12)
+colnames (partNSK) <- c(1:12)
+
+
+
+#заменяем значения NaN на ноль в таблице в долями
+partMSK <- replace(partMSK, is.na(partMSK), 0)
+partSPb <- replace(partSPb, is.na(partSPb), 0)
+partNSK <- replace(partNSK, is.na(partNSK), 0)
+
+
+
+
+
+##
+# формирование графика отгурзки в каждый филиал на основе утвержденного плана производства из 1С,
+# допзаказов и рассчитанных долей потребностей каждого филиала в общем плане производства
+
+
+# Загружаем перечень готовой продукции library readr И readxl
+#productionPlan1C<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/production plan 1С_3.xls")
+
+productionPlan1C<-read.table("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/график отгрузки ГП.csv", skip = 2, 
+                             sep = ";", header = TRUE)
+
+productionPlan1C<- productionPlan1C[ , c(2, 4: ncol(productionPlan1C))]
+
+
+# productionPlan1C<- productionPlan1C [complete.cases(productionPlan1C),]
+# write.table(productionPlan1C , "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/production plan 1С_4.csv", row.names = FALSE)
+# productionPlan1C<-read.table("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Образцы отчетов/production plan 1С_4.csv", blank.lines.skip = TRUE)
+
+
+# colnames(productionPlan1C)<- c ("code", "item", c (3:ncol(productionPlan1C)))
+ colnames(productionPlan1C)[1:2]<- c ("code", "item")
+
+fullRangeProdPlan<-merge(monthlyProductionPlanMSK [,c(1,2)], productionPlan1C, by ="code", all.x= TRUE)
+
+#преобразовываем коды в цифровой формат
+fullRangeProdPlan [,1]<-   as.numeric(fullRangeProdPlan[,1])
+
+#ранжируем в убывающем порядке
+fullRangeProdPlan<-fullRangeProdPlan[order(fullRangeProdPlan[,1]),] 
+fullRangeProdPlan<- fullRangeProdPlan [,c (1,2, 4:ncol(fullRangeProdPlan))]
+
+fullRangeProdPlan[is.na(fullRangeProdPlan)]<-0
+
+#парсинг дат из заголовков стоблцов
+namesDates<- names(fullRangeProdPlan)[3:ncol(fullRangeProdPlan)-1]
+
+colnames(fullRangeProdPlan)[3:ncol(fullRangeProdPlan)-1]<- str_sub(namesDates, start= -10)
+
+# 
+# 
+# создать "заготовку" по плановому приходу товара в каждый из филиалов
+# для Москвы
+
+arrivalPlanMSK<- totalProductiontime
+arrivalPlanMSK [4:nrow(arrivalPlanMSK), 3:ncol(arrivalPlanMSK)]<- 0
+
+#определение "номера" столбца из которого будут взяты данные по допзаказам
+# первые 5 столбцов текущего месяца - Москва, затем 5 стоблцов - СПб, затем 5 столбцов НСК
+as.numeric(str_sub(colnames(fullRangeProdPlan) [3], end =2))
+
+#опрделяем текущий номер недели "внутри" месяца
+weekNumberMonth<- as.numeric(arrivalPlanMSK [  3, match (weekReport, colnames(arrivalPlanMSK) )])
+
+# проходим номера недель, начиная с текущей и присваиваем величину допзаказов
+# начиная с номера текущей недели внутри месяца
+
+#определеяем номер колонки, с которой начинается текущий месяц
+startCurrentMonth<-match(month(Sys.Date()), arrivalPlanMSK [1,])
+
+# проставляем допзаказы на соответствующие недели
+for (i in weekNumberMonth :5 ) {
+  for (d in 4:nrow(arrivalPlanMSK)) {
+    
+  arrivalPlanMSK[d, i+startCurrentMonth-1] <- fullRangeProdPlan[d-3, i+2]
+  
+  }
+}
+  
+
+# 
+# на основе плана производства на месяц, долей распределения по филиалам, формируем план поставок в каждый филиал
+# 
+# 
+
+
+
+# поиск колонки в общем плане производства, где содержится план на текущий месяц
+monthDigit<- ifelse(month(Sys.Date())<10, paste(0, month(Sys.Date()), sep = "" ), month(Sys.Date())  )
+monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
+monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
+dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+#colNumberProduction<- match("X28.10.15", colnames(fullRangeProdPlan))
+
+
+#номера колонок, относящихся к текущему месяцу
+colMonth<- which (arrivalPlanMSK[1,] %in% month(Sys.Date()))
+
+#номера колонок текущего месяца, начиная с текущей недели и до конца месяца !!
+#colMonth<- c((weekReport+2):max(colMonth))
+colMonth<- c(which (colnames(arrivalPlanMSK) %in% (weekReport) ) : max(colMonth))
+
+
+# получаем плановый понедельный приход на текущий месяц с учетом допзаказов (первое слагаемое); 
+# преобразовываем в цифровой формат 
+arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)]<- round(as.numeric(data.matrix(arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)], rownames.force = NA))+  
+# умножаем план на текущий месяц на доли и делим на количество недель в месяце
+(fullRangeProdPlan[ , colNumberProduction] * partMSK [ , month(Sys.Date())])/ length(colMonth))
+
+
+
+# поиск колонки в общем плане производства, где содержится план на месяц СЛЕДУЮЩИЙ за текущим
+monthDigit<- ifelse(month(Sys.Date())+1<10, paste(0, month(Sys.Date())+1, sep = "" ), month(Sys.Date())+1  )
+monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
+monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
+dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+1<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+
+#номера колонок, относящихся к текущему месяцу слеюущему за текущим
+colMonth<- which (arrivalPlanMSK[1,] %in% ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12) )
+
+
+arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)]<- round(data.matrix(arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)], rownames.force = NA)+  
+                                                               # умножаем план на текущий месяц на доли и делим на количество недель в месяце
+                                                               (fullRangeProdPlan[ , colNumberProduction] * partMSK [ , ifelse(month(Sys.Date()+1)<=12, month(Sys.Date())+1, month(Sys.Date())+1-12)])/ length(colMonth))
+
+# 
+# добавить расчет еще одного месяца для получения плана на 3 месяца
+# 
+
+
+# поиск колонки в общем плане производства, где содержится план на месяц СЛЕДУЮЩИЙ за текущим
+monthDigit<- ifelse(month(Sys.Date())+2<10, paste(0, month(Sys.Date())+2, sep = "" ), month(Sys.Date())+2  )
+monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
+monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
+dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+2<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+
+#номера колонок, относящихся к месяцу через 2 месяца
+colMonth<- which (arrivalPlanMSK[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12) )
+
+
+arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)]<- round(data.matrix(arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)], rownames.force = NA)+  
+                                                               # умножаем план на текущий месяц на доли и делим на количество недель в месяце
+                                                               (fullRangeProdPlan[ , colNumberProduction] * partMSK [ , ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12)])/ length(colMonth))
+
+#делаем отбор от текущей недели и до конца года
+arrivalPlanMSK<- arrivalPlanMSK [ , c(1,2, c(match(weekReport, colnames(arrivalPlanMSK)):ncol(arrivalPlanMSK)))]
+write.csv(arrivalPlanMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/arrivalPlanMSK.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# создать "заготовку" по плановому приходу товара в каждый из филиалов
+# для Санкт-Петербурга
+
+arrivalPlanSPb<- totalProductiontime
+arrivalPlanSPb [4:nrow(arrivalPlanSPb), 3:ncol(arrivalPlanSPb)]<- 0
+
+#определение "номера" столбца из которого будут взяты данные по допзаказам
+# первые 5 столбцов текущего месяца - Москва, затем 5 стоблцов - СПб, затем 5 столбцов НСК
+as.numeric(str_sub(colnames(fullRangeProdPlan) [3], end =2))
+
+#опрделяем текущий номер недели "внутри" месяца
+weekNumberMonth<- as.numeric(arrivalPlanSPb [  3, match (weekReport, colnames(arrivalPlanSPb) )])
+
+# проходим номера недель, начиная с текущей и присваиваем величину допзаказов
+# начиная с номера текущей недели внутри месяца
+
+#определеяем номер колонки, с которой начинается текущий месяц
+startCurrentMonth<-match(month(Sys.Date()), arrivalPlanSPb [1,])
+
+# проставляем допзаказы на соответствующие недели
+for (i in weekNumberMonth :5 ) {
+  for (d in 4:nrow(arrivalPlanSPb)) {
+    
+    arrivalPlanSPb[d, i+startCurrentMonth-1] <- fullRangeProdPlan[d-3, i+2+5] #"5" индексация колонок для идентификации допзаказа СПб
+    
+  }
+}
+
+
+# 
+# на основе плана производства на месяц, долей распределения по филиалам, формируем план поставок в каждый филиал
+# 
+# 
+
+
+
+# поиск колонки в общем плане производства, где содержится план на текущий месяц
+monthDigit<- ifelse(month(Sys.Date())<10, paste(0, month(Sys.Date()), sep = "" ), month(Sys.Date())  )
+monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
+monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
+dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+
+
+
+#номера колонок, относящихся к текущему месяцу
+colMonth<- which (arrivalPlanSPb[1,] %in% month(Sys.Date()))
+
+#номера колонок текущего месяца, начиная с текущей недели и до конца месяца !!
+#colMonth<- c((weekReport+2):max(colMonth))
+colMonth<- c(which (colnames(arrivalPlanSPb) %in% (weekReport) ) : max(colMonth))
+
+# получем плановый понедлеьный приход на текущий месяц с учетом допзаказов (первое слагаемое); 
+# преобразовываем в цифровой формат 
+arrivalPlanSPb [4:nrow(arrivalPlanSPb), c(colMonth)]<- round(as.numeric(data.matrix(arrivalPlanSPb [4:nrow(arrivalPlanSPb), c(colMonth)], rownames.force = NA))+  
+                                                               # умножаем план на текущий месяц на доли и делим на количество недель в месяце
+                                                               (fullRangeProdPlan[ , colNumberProduction] * partSPb [ , month(Sys.Date())])/ length(colMonth))
+
+
+
+# поиск колонки в общем плане производства, где содержится план на месяц СЛЕДУЮЩИЙ за текущим
+monthDigit<- ifelse(month(Sys.Date())+1<10, paste(0, month(Sys.Date())+1, sep = "" ), month(Sys.Date())+1  )
+monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
+monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
+dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+1<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+
+#номера колонок, относящихся к текущему месяцу слеюущему за текущим
+colMonth<- which (arrivalPlanSPb[1,] %in% ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12) )
+
+
+arrivalPlanSPb [4:nrow(arrivalPlanSPb), c(colMonth)]<- round(data.matrix(arrivalPlanSPb [4:nrow(arrivalPlanSPb), c(colMonth)], rownames.force = NA)+  
+                                                               # умножаем план на текущий месяц на доли и делим на количество недель в месяце
+                                                               (fullRangeProdPlan[ , colNumberProduction] * partSPb [ , ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12)])/ length(colMonth))
+
+# 
+# добавить расчет еще одного месяца для получения плана на 3 месяца
+# 
+
+
+# поиск колонки в общем плане производства, где содержится план на месяц СЛЕДУЮЩИЙ за текущим
+monthDigit<- ifelse(month(Sys.Date())+2<10, paste(0, month(Sys.Date())+2, sep = "" ), month(Sys.Date()) +2 )
+monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
+monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
+dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+2<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+
+#номера колонок, относящихся к текущему месяцу слеюущему за текущим
+colMonth<- which (arrivalPlanSPb[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12) )
+
+
+arrivalPlanSPb [4:nrow(arrivalPlanSPb), c(colMonth)]<- round(data.matrix(arrivalPlanSPb [4:nrow(arrivalPlanSPb), c(colMonth)], rownames.force = NA)+  
+                                                               # умножаем план на текущий месяц на доли и делим на количество недель в месяце
+                                                               (fullRangeProdPlan[ , colNumberProduction] * partSPb [ , ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12)])/ length(colMonth))
+#делаем отбор от текущей недели и до конца года
+arrivalPlanSPb<- arrivalPlanSPb [ , c(1,2, c(match(weekReport, colnames(arrivalPlanSPb)):ncol(arrivalPlanSPb)))]
+write.csv(arrivalPlanSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/arrivalPlanSPb.csv")
+
+
+
+
+
+
+
+
+
+
+
+# создать "заготовку" по плановому приходу товара в каждый из филиалов
+# для Новосибирска
+
+arrivalPlanNSK<- totalProductiontime
+arrivalPlanNSK [4:nrow(arrivalPlanNSK), 3:ncol(arrivalPlanNSK)]<- 0
+
+#определение "номера" столбца из которого будут взяты данные по допзаказам
+# первые 5 столбцов текущего месяца - Москва, затем 5 стоблцов - СПб, затем 5 столбцов НСК
+as.numeric(str_sub(colnames(fullRangeProdPlan) [3], end =2))
+
+#опрделяем текущий номер недели "внутри" месяца
+weekNumberMonth<- as.numeric(arrivalPlanNSK [  3, match (weekReport, colnames(arrivalPlanNSK) )])
+
+# проходим номера недель, начиная с текущей и присваиваем величину допзаказов
+# начиная с номера текущей недели внутри месяца
+
+#определеяем номер колонки, с которой начинается текущий месяц
+startCurrentMonth<-match(month(Sys.Date()), arrivalPlanNSK [1,])
+
+# проставляем допзаказы на соответствующие недели
+for (i in weekNumberMonth :5 ) {
+  for (d in 4:nrow(arrivalPlanNSK)) {
+    
+    arrivalPlanNSK[d, i+startCurrentMonth-1] <- fullRangeProdPlan[d-3, i+2+10]
+    
+  }
+}
+
+
+# 
+# на основе плана производства на месяц, долей распределения по филиалам, формируем план поставок в каждый филиал
+# 
+# Новосибирск
+
+
+
+# поиск колонки в общем плане производства, где содержится план на текущий месяц
+monthDigit<- ifelse(month(Sys.Date())<10, paste(0, month(Sys.Date()), sep = "" ), month(Sys.Date())  )
+monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
+monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
+dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+
+
+
+#номера колонок, относящихся к текущему месяцу
+colMonth<- which (arrivalPlanNSK[1,] %in% month(Sys.Date()))
+
+#номера колонок текущего месяца, начиная с текущей недели и до конца месяца !!
+#colMonth<- c((weekReport+2):max(colMonth))
+colMonth<- c(which (colnames(arrivalPlanNSK) %in% (weekReport) ) : max(colMonth))
+# получем плановый понедлеьный приход на текущий месяц с учетом допзаказов (первое слагаемое); 
+# преобразовываем в цифровой формат 
+arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)]<- round(as.numeric(data.matrix(arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)], rownames.force = NA))+  
+                                                               # умножаем план на текущий месяц на доли и делим на количество недель в месяце
+                                                               (fullRangeProdPlan[ , colNumberProduction] * partNSK [ , month(Sys.Date())])/ length(colMonth))
+
+
+
+# поиск колонки в общем плане производства, где содержится план на месяц СЛЕДУЮЩИЙ за текущим
+monthDigit<- ifelse(month(Sys.Date())+1<10, paste(0, month(Sys.Date())+1, sep = "" ), month(Sys.Date())+1  )
+monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
+monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
+dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+1<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+
+#номера колонок, относящихся к текущему месяцу слеюущему за текущим
+colMonth<- which (arrivalPlanNSK[1,] %in% ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12) )
+
+
+arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)]<- round(data.matrix(arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)], rownames.force = NA)+  
+                                                               # умножаем план на текущий месяц на доли и делим на количество недель в месяце
+                                                               (fullRangeProdPlan[ , colNumberProduction] * partNSK [ , ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12)])/ length(colMonth))
+
+# 
+# добавить расчет еще одного месяца для получения плана на 3 месяца
+# 
+
+
+# поиск колонки в общем плане производства, где содержится план на месяц СЛЕДУЮЩИЙ за текущим
+monthDigit<- ifelse(month(Sys.Date())+2<10, paste(0, month(Sys.Date())+2, sep = "" ), month(Sys.Date())+2  )
+monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
+monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
+dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+2<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
+colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
+
+#номера колонок, относящихся к текущему месяцу слеюущему за текущим
+colMonth<-which (arrivalPlanNSK[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+1, month(Sys.Date())+2-12) )
+
+
+arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)]<- round(data.matrix(arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)], rownames.force = NA)+  
+                                                               # умножаем план на текущий месяц на доли и делим на количество недель в месяце
+                                                               (fullRangeProdPlan[ , colNumberProduction] * partNSK [ , ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12)])/ length(colMonth))
+
+#делаем отбор от текущей недели и до конца года
+arrivalPlanNSK<- arrivalPlanNSK [ , c(1,2, c(match(weekReport, colnames(arrivalPlanNSK)):ncol(arrivalPlanNSK)))]
+write.csv(arrivalPlanNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/arrivalPlanNSK.csv")
+
+# записываем все таблицы с ежемесячной ПЛАНОВОЙ потребностью в приходе ГП в каждый филиал и общем приходе
+write.csv(monthlyProductionPlan, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/monthlyProductionPlan.csv")
+write.csv(monthlyProductionPlanMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/monthlyProductionPlanMSK.csv")
+write.csv(monthlyProductionPlanSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/monthlyProductionPlanSPb.csv")
+write.csv(monthlyProductionPlanNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/monthlyProductionPlanNSK.csv")
+
+
+
+# доли
+partMSK<- cbind(salesMoscow [ ,c (1:2)], round(partMSK, digits = 2))
+partSPb<- cbind(salesSPb [ ,c (1:2)], round(partSPb, digits = 2))
+partNSK<- cbind(salesNSK [ ,c (1:2)], round(partNSK, digits = 2))
+
+write.csv(partMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/partMSK.csv")
+write.csv(partSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/partSPb.csv")
+write.csv(partNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/partNSK.csv")
+
+
+
+
+
+
+
+
+##
+##
+##
+## Рекомендация необходимых допзаказов
+##
+
+# преобразовываем в числовой формат 
+# для Москвы
+for (i in 3:ncol(arrivalPlanMSK) ) {
+  arrivalPlanMSK[ ,i] <- as.numeric(arrivalPlanMSK[ ,i])
+}
+arrivalPlanMSKmonth <- arrivalPlanMSK[ 4: nrow(arrivalPlanMSK) , 1:6]
+
+#сумма плановых приходов за ближайшие 4 недели
+arrivalPlanMSKmonth$sum <- rowSums (arrivalPlanMSKmonth [ , 3:6])
+
+# суммарный расход за ближайшие 4 недели
+salesMoscowMonth <- salesMoscow [ , 1:6]
+salesMoscowMonth$sum <- rowSums (salesMoscow [ , 3:6])
+# номер колонки с текущей неделей
+currntWeekcolumnNumber<- which(colnames(reportMSK) %in% weekReport)
+
+# сумма текущих остатков и приходов за ближайшие 4 недели
+deficitMSK<- cbind(reportMSK[1:(nrow(flowMSK)/3),c(1:2)], (reportMSK[1:(nrow(flowMSK)/3), currntWeekcolumnNumber] + arrivalPlanMSKmonth$sum 
+                                                           -salesMoscowMonth$sum)/ salesMoscowMonth$sum)
+
+deficitMSK<- cbind(reportMSK[1:(nrow(flowMSK)/3),c(1:2)], 
+                   reportMSK[1:(nrow(flowMSK)/3), currntWeekcolumnNumber],
+                   arrivalPlanMSKmonth$sum,
+                   salesMoscowMonth$sum,
+                   reportMSK[1:(nrow(flowMSK)/3), currntWeekcolumnNumber] + arrivalPlanMSKmonth$sum -salesMoscowMonth$sum, 
+                   round(deficitMSK[ ,3], digits = 2))
+
+colnames(deficitMSK)<-  c ("код", "наименование", "текущий остаток", "план прихода 4 нед", "план продаж 4 нед", "плановый остаток через 4 нед", "оборач-ть через 4 нед, мес")
+
+deficitMSKFilter <- subset(deficitMSK, deficitMSK [ ,6] < -0)
+surplusMSKFilter <- subset(deficitMSK, deficitMSK [ ,7] > 2)
+
+
+#"физический остаток" без учета резервов
+stockMSK<- cbind( sat2 [,4], (sat2[ ,warehouseStockMoscow]+sat2[ ,warehouseStockMoscowBranch] + sat2[ ,warehouseStockMoscowTransit]))
+colnames(stockMSK) <- c("код", "количество")
+
+deficitMSKFilter<-merge(deficitMSKFilter, stockMSK, by ="код", all.x= TRUE)
+deficitMSKFilter<- cbind(deficitMSKFilter[ , c(1:2)], deficitMSKFilter[ ,8], deficitMSKFilter[ , c(3:7)])
+
+colnames(deficitMSKFilter)<-  c ("код", "наименование", "текущий остаток", "остаток с резервом", "план прихода 4 нед", "план продаж 4 нед", "плановый остаток через 4 нед", "оборач-ть через 4 нед, мес")
+
+
+write.csv(deficitMSKFilter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/deficitMSKFilter.csv")
+write.csv(surplusMSKFilter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/surplusMSKFilter.csv")
+
+
+
+
+
+
+#для Санкт-Петербурга
+
+
+for (i in 3:ncol(arrivalPlanSPb) ) {
+  arrivalPlanSPb[ ,i] <- as.numeric(arrivalPlanSPb[ ,i])
+}
+arrivalPlanSPbmonth <- arrivalPlanSPb[ 4: nrow(arrivalPlanSPb) , 1:6]
+
+#сумма плановых приходов за ближайшие 4 недели
+arrivalPlanSPbmonth$sum <- rowSums (arrivalPlanSPbmonth [ , 3:6])
+
+# суммарный расход за ближайшие 4 недели
+salesSPbMonth <- salesSPb [ , 1:6]
+salesSPbMonth$sum <- rowSums (salesSPb [ , 3:6])
+
+# сумма текущих остатков и приходов за ближайшие 4 недели
+deficitSPb<- cbind(reportSPb[1:(nrow(flowSPb)/3),c(1:2)], (reportSPb[1:(nrow(flowSPb)/3), currntWeekcolumnNumber] + arrivalPlanSPbmonth$sum 
+                                                           -salesSPbMonth$sum)/ salesSPbMonth$sum)
+
+deficitSPb<- cbind(reportSPb[1:(nrow(flowSPb)/3),c(1:2)], 
+                   reportSPb[1:(nrow(flowSPb)/3), currntWeekcolumnNumber],
+                   arrivalPlanSPbmonth$sum,
+                   salesSPbMonth$sum,
+                   reportSPb[1:(nrow(flowSPb)/3), currntWeekcolumnNumber] + arrivalPlanSPbmonth$sum -salesSPbMonth$sum, 
+                   round(deficitSPb[ ,3], digits = 2))
+
+colnames(deficitSPb)<-  c ("код", "наименование", "текущий остаток", "план прихода 4 нед", "план продаж 4 нед", "плановый остаток через 4 нед", "оборач-ть через 4 нед, мес")
+
+deficitSPbFilter <- subset(deficitSPb, deficitSPb [ ,6] < -0)
+surplusSPbFilter <- subset(deficitSPb, deficitSPb [ ,7] > 2)
+
+
+#"физический остаток" без учета резервов
+stockSPb<- cbind( sat2 [,4], sat2[ ,warehouseStockSPb])
+colnames(stockSPb) <- c("код", "количество")
+
+deficitSPbFilter<-merge(deficitSPbFilter, stockSPb, by ="код", all.x= TRUE)
+deficitSPbFilter<- cbind(deficitSPbFilter[ , c(1:2)], deficitSPbFilter[ ,8], deficitSPbFilter[ , c(3:7)])
+
+colnames(deficitSPbFilter)<-  c ("код", "наименование", "текущий остаток", "остаток с резервом", "план прихода 4 нед", "план продаж 4 нед", "плановый остаток через 4 нед", "оборач-ть через 4 нед, мес")
+
+
+
+write.csv(deficitSPbFilter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/deficitSPbFilter.csv")
+write.csv(surplusSPbFilter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/surplusSPbFilter.csv")
+
+
+
+# для Новосибирска
+
+for (i in 3:ncol(arrivalPlanNSK) ) {
+  arrivalPlanNSK[ ,i] <- as.numeric(arrivalPlanNSK[ ,i])
+}
+arrivalPlanNSKmonth <- arrivalPlanNSK[ 4: nrow(arrivalPlanNSK) , 1:6]
+
+#сумма плановых приходов за ближайшие 4 недели
+arrivalPlanNSKmonth$sum <- rowSums (arrivalPlanNSKmonth [ , 3:6])
+
+# суммарный расход за ближайшие 4 недели
+salesNSKMonth <- salesNSK [ , 1:6]
+salesNSKMonth$sum <- rowSums (salesNSK [ , 3:6])
+
+# сумма текущих остатков и приходов за ближайшие 4 недели
+deficitNSK<- cbind(reportNSK[1:(nrow(flowNSK)/3),c(1:2)], (reportNSK[1:(nrow(flowNSK)/3), currntWeekcolumnNumber] + arrivalPlanNSKmonth$sum 
+                   -salesNSKMonth$sum)/ salesNSKMonth$sum)
+
+deficitNSK<- cbind(reportNSK[1:(nrow(flowNSK)/3),c(1:2)], 
+                   reportNSK[1:(nrow(flowNSK)/3), currntWeekcolumnNumber],
+                   arrivalPlanNSKmonth$sum,
+                    salesNSKMonth$sum,
+                    reportNSK[1:(nrow(flowNSK)/3), currntWeekcolumnNumber] + arrivalPlanNSKmonth$sum -salesNSKMonth$sum, 
+                    round(deficitNSK[ ,3], digits = 2))
+
+colnames(deficitNSK)<-  c ("код", "наименование", "текущий остаток", "план прихода 4 нед", "план продаж 4 нед", "плановый остаток через 4 нед", "оборач-ть через 4 нед, мес")
+
+deficitNSKFilter <- subset(deficitNSK, deficitNSK [ ,6] < 0)
+surplusNSKFilter <- subset(deficitNSK, deficitNSK [ ,7] > 2)
+
+
+#"физический остаток" без учета резервов
+stockNSK<- cbind( sat2 [,4], (sat2[ ,warehouseStockNSK ]+sat2[ ,warehouseStockNSKBranch] + sat2[ ,warehouseStockNSKTransit]))
+colnames(stockNSK) <- c("код", "количество")
+
+deficitNSKFilter<-merge(deficitNSKFilter, stockNSK, by ="код", all.x= TRUE)
+deficitNSKFilter<- cbind(deficitNSKFilter[ , c(1:2)], deficitNSKFilter[ ,8], deficitNSKFilter[ , c(3:7)])
+
+colnames(deficitNSKFilter)<-  c ("код", "наименование", "текущий остаток", "остаток с резервом", "план прихода 4 нед", "план продаж 4 нед", "плановый остаток через 4 нед", "оборач-ть через 4 нед, мес")
+
+
+
+write.csv(deficitNSKFilter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/deficitNSKFilter.csv")
+write.csv(surplusNSKFilter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/surplusNSKFilter.csv")
+
+
+
+
+
+
+# сводные доли на текущий месяц
+allParts<-cbind(salesMoscow [ ,c (1:2)], partMSK[ , month(Sys.Date())+2], partSPb[ , month(Sys.Date())+2,], partNSK[ , month(Sys.Date())+2])
+colnames(allParts)<- c("code", "item", "MSK", "SPB", "NSK")
+
+
+allParts <- cbind(allParts[ , 1:2],   
+                  weeklyStockMoscow [ , weekReport+2], salesMoscowMonth [ , 7],
+                  weeklyStockSPb [ , weekReport+2], salesSPbMonth [ , 7],
+                  weeklyStockNSK [ , weekReport+2], salesNSKMonth [ , 7],
+                  allParts [ ,3:5])
+
+colnames(allParts) <- c("code", "наименование", "остатки МСК", "продажи МСК", "остатки СПб", "продажи СПб","остатки НСК", "продажи НСК","MSK", "SPB", "NSK")
+write.csv(allParts, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/allParts.csv")
+
+allParts$приоритет<- 0
+
+for (i in 1:nrow(allParts)) {
+
+  allParts[i,12]<- ifelse (allParts[i,3]<0 | allParts[i,5]<0 | allParts[i,7]<0, 
+                               allParts[i,12]<- "приоритет", allParts[i,12]<- "норм")
+  
+}
+
+priorityProduction <- subset(allParts, allParts [ ,12] == "приоритет") [1:8]
+
+write.csv(priorityProduction, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/priorityProduction.csv", row.names=FALSE)
+
+
+
+
+#
+#копирование исходных и полученных файлов
+#
+
+# создать новую папку
+dir.create(paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/Архив/", Sys.Date(), sep = ""))
+
+# скопировать все исходные файлы
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов", full.names = TRUE)
+file.copy(flist, paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/Архив/", Sys.Date(), sep = ""))
+
+# скопировать все полученные после расчетов файлы
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов", full.names = TRUE)
+file.copy(flist, paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/Архив/", Sys.Date(), sep = ""))
+
+
+#скопировать все файлы на сетевой сервер
+file.copy(flist, "Z:/Смирнов/Отчеты для R", overwrite = TRUE)
+
+
+
+
+
+
+
+
+
+
