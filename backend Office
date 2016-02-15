@@ -2843,3 +2843,647 @@ file.copy(flist, "Z:/Смирнов/Отчеты для R", overwrite = TRUE)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Выполнение плана продаж для Москвы
+
+soldMSK<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/факт продажи МСК.xls", skip =2)
+colnames(soldMSK) <- soldMSK [1, ]
+salesPlanMSK<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж МСК-", month(Sys.Date())-1, ".xls", sep=""))
+colnames(salesPlanMSK) <- salesPlanMSK [2, ]
+
+soldplanMSK<-merge(salesPlanMSK, soldMSK, by ="Код", all.x= TRUE)
+soldplanMSK<- soldplanMSK [ ,c(1,4,6, 12, 13, 14)]
+colnames(finishedGoodsList)<- c("Код", "наименование", "себестоимость")
+
+colnames(soldplanMSK)<- c("Код", "наименование", "план продаж", "факт продаж", "выручка", "маржа")
+soldplanMSK [ ,1]<- as.numeric(soldplanMSK[ , 1])
+
+
+soldplanMSK<-merge(soldplanMSK, finishedGoodsList, by ="Код", all.x= TRUE)
+soldplanMSK<- soldplanMSK [ , c(1:6,8)]
+
+soldplanMSK[is.na(soldplanMSK)]<-0
+soldplanMSK <-soldplanMSK [ c(1:(nrow(salesPlanMSK)-2)), ]
+
+
+soldplanMSK[soldplanMSK==" "]<- "0"
+
+#преобразовываем в числовой формат
+for (i in 3:7 ) {
+  soldplanMSK[ ,i] <- as.numeric(soldplanMSK[ ,i])
+}
+
+#факт продаж по себестоимости / план продаж по себестоимости
+MSKsalesprogress<-round(sum(as.numeric(soldplanMSK[ , 4]) *  soldplanMSK [,7])  /  sum(as.numeric(soldplanMSK[ , 3]) *  soldplanMSK [,7]), digits=2)
+
+MSKrealSales<- sum(as.numeric(soldplanMSK[ , 4]) *  soldplanMSK [,7])
+MSKplanSales<- sum(as.numeric(soldplanMSK[ , 3]) *  soldplanMSK [,7])
+
+soldplanMSK$выполнение <-  round(soldplanMSK [ ,4]/soldplanMSK [ ,3], digits=2)*100
+soldplanMSK<- soldplanMSK [order(-soldplanMSK$выручка),] 
+row.names(soldplanMSK) <- NULL
+
+colnames (soldplanMSK) [8] <- "%, выполнения"
+
+write.csv(soldplanMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanMSK.csv")
+
+
+
+
+
+
+
+
+# Выполнение плана продаж для Санкт-Петербурга
+
+soldSPb<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/факт продажи СПб.xls", skip =2)
+colnames(soldSPb) <- soldSPb [1, ]
+salesPlanSPb<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж СПб-", month(Sys.Date())-1, ".xls", sep=""))
+colnames(salesPlanSPb) <- salesPlanSPb [2, ]
+
+
+soldplanSPb<-merge(salesPlanSPb, soldSPb, by ="Код", all.x= TRUE)
+soldplanSPb<- soldplanSPb [ ,c(1,4,6, 12, 13, 14)]
+colnames(finishedGoodsList)<- c("Код", "наименование", "себестоимость")
+
+colnames(soldplanSPb)<- c("Код", "наименование", "план продаж", "факт продаж", "выручка", "маржа")
+soldplanSPb [ ,1]<- as.numeric(soldplanSPb[ , 1])
+
+
+soldplanSPb<-merge(soldplanSPb, finishedGoodsList, by ="Код", all.x= TRUE)
+soldplanSPb<- soldplanSPb [ , c(1:6,8)]
+
+soldplanSPb[is.na(soldplanSPb)]<-0
+soldplanSPb <-soldplanSPb [ c(1:(nrow(salesPlanSPb)-2)), ]
+
+
+soldplanSPb[soldplanSPb==" "]<- "0"
+
+#преобразовываем в числовой формат
+for (i in 3:7 ) {
+  soldplanSPb[ ,i] <- as.numeric(soldplanSPb[ ,i])
+}
+
+#факт продаж по себестоимости / план продаж по себестоимости
+SPbsalesprogress<- round(sum(as.numeric(soldplanSPb[ , 4]) *  soldplanSPb [,7])  /  sum(as.numeric(soldplanSPb[ , 3]) *  soldplanSPb [,7]), digits=2)
+
+SPbrealSales<- sum(as.numeric(soldplanSPb[ , 4]) *  soldplanSPb [,7])
+SPbplanSales<- sum(as.numeric(soldplanSPb[ , 3]) *  soldplanSPb [,7])
+
+soldplanSPb$выполнение <-  round(soldplanSPb [ ,4]/soldplanSPb [ ,3], digits=2)*100
+soldplanSPb<- soldplanSPb [order(-soldplanSPb$выручка),] 
+row.names(soldplanSPb) <- NULL
+
+colnames (soldplanSPb) [8] <- "%, выполнения"
+
+write.csv(soldplanSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanSPb.csv")
+
+
+
+
+
+
+
+
+
+
+# выполнение плана продаж Новосибирском
+
+soldNSK<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/факт продажи НСК.xls", skip =2)
+colnames(soldNSK) <- soldNSK [1, ]
+salesPlanNSK<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж НСК-", month(Sys.Date())-1, ".xls", sep=""))
+colnames(salesPlanNSK) <- salesPlanNSK [2, ]
+
+soldplanNSK<-merge(salesPlanNSK, soldNSK, by ="Код", all.x= TRUE)
+soldplanNSK<- soldplanNSK [ ,c(1,4,6, 12, 13, 14)]
+colnames(finishedGoodsList)<- c("Код", "наименование", "себестоимость")
+
+colnames(soldplanNSK)<- c("Код", "наименование", "план продаж", "факт продаж", "выручка", "маржа")
+soldplanNSK [ ,1]<- as.numeric(soldplanNSK[ , 1])
+
+
+soldplanNSK<-merge(soldplanNSK, finishedGoodsList, by ="Код", all.x= TRUE)
+soldplanNSK<- soldplanNSK [ , c(1:6,8)]
+
+soldplanNSK[is.na(soldplanNSK)]<-0
+soldplanNSK <-soldplanNSK [ c(1:(nrow(salesPlanNSK)-2)), ]
+
+
+soldplanNSK[soldplanNSK==" "]<- "0"
+
+#преобразовываем в числовой формат
+for (i in 3:7 ) {
+  soldplanNSK[ ,i] <- as.numeric(soldplanNSK[ ,i])
+}
+
+#факт продаж по себестоимости / план продаж по себестоимости
+NSKsalesprogress<- round(sum(as.numeric(soldplanNSK[ , 4]) *  soldplanNSK [,7])  /  sum(as.numeric(soldplanNSK[ , 3]) *  soldplanNSK [,7]), digits=2)
+
+NSKrealSales<- sum(as.numeric(soldplanNSK[ , 4]) *  soldplanNSK [,7])
+NSKplanSales<- sum(as.numeric(soldplanNSK[ , 3]) *  soldplanNSK [,7])
+
+soldplanNSK$выполнение <-  round(soldplanNSK [ ,4]/soldplanNSK [ ,3], digits=2)*100
+soldplanNSK<- soldplanNSK [order(-soldplanNSK$выручка),] 
+
+row.names(soldplanNSK) <- NULL
+
+colnames (soldplanNSK) [8] <- "%, выполнения"
+
+write.csv(soldplanNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanNSK.csv")
+
+
+# формируем таблицу с данными план/факт и общий % выполнения для каждого филиала для передачи на сервер
+salesAnalysis <- data.frame(
+                            c(sum((as.numeric(soldplanMSK[ , 4]) *  soldplanMSK [,7])), 
+                              sum(as.numeric(soldplanSPb[ , 4]) *  soldplanSPb [,7]),
+                              sum(as.numeric(soldplanNSK[ , 4]) *  soldplanNSK [,7])),
+                            
+                            c(sum(as.numeric(soldplanMSK[ , 3]) *  soldplanMSK [,7]),
+                              sum(as.numeric(soldplanSPb[ , 3]) *  soldplanSPb [,7]),
+                              sum(as.numeric(soldplanNSK[ , 3]) *  soldplanNSK [,7])))
+
+salesAnalysis <- as.data.frame(t(salesAnalysis))
+colnames(salesAnalysis) <- c("Москва", "Санкт-Петербург", "Новосибирск")
+row.names(salesAnalysis) <- c("факт", "план")
+salesAnalysis <- rbind(salesAnalysis, round(salesAnalysis[1,]/salesAnalysis[2,]*100, digits=1) )
+write.csv(salesAnalysis, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/salesAnalysis.csv")
+
+
+
+
+
+
+
+
+
+
+
+#добавить показатель уровня логистического сервиса (% количества дней в месяце, когда "физический" остаток товара на складе в шт 
+# превышал страховой запас)
+
+#логистический сервис для Москвы
+
+# цикл от 1 до 22 по загрузке  и добавлению остатков к таблице
+
+##
+##загружаем данные по остаткам на всех складах
+##
+##
+##загружаем данные по остаткам на всех складах
+##
+#allStock<-read.csv(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/все остатки ", Sys.Date(), ".csv", sep=""), sep= ";", skip = "1")
+
+
+
+# получаем количество дней, в которых регистрировались остатки на складах
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки", full.names = TRUE)
+#
+datesNumber<- length(flist) 
+
+##
+##загружаем данные по остаткам на всех складах
+##
+i<-1
+
+for (i in 1:datesNumber ) {
+  
+
+
+
+allStock<-read_excel(paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки/все остатки ", i, ".xls", sep=""))
+#заменить NA на ноль
+allStock[is.na(allStock)]<-0
+
+header<-allStock[1,]
+
+
+#обработать содержимое для получения цифр
+write.csv(allStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv")
+
+sat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+              , skip=1, na.strings=c(" ", NA), stringsAsFactors=FALSE) 
+
+write.csv(sat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", )
+
+sat2<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+               skip=2) 
+
+
+#добавить заголовки стобцов
+names(sat2)<-c(0,0,header)
+
+
+warehouseStockMoscow<-match("Москва продажи (регионы)", colnames(sat2))
+warehouseStockMoscowBranch<-match("Москва, Склад продажи", colnames(sat2))
+warehouseStockMoscowTransit<-match("Москва в Пути (филиал)", colnames(sat2))
+
+stockComponentsMoscow<-sat2[,c(4,6,warehouseStockMoscow)]
+#names(stockComponentsMoscow)<-c("code", "item")
+
+sat2[is.na(sat2)]<-0
+
+
+
+
+
+
+#вычесть из остатков резервы и добавить 
+stockComponentsMoscow[ ,3]<- sat2[ ,warehouseStockMoscow]+sat2[ ,warehouseStockMoscowBranch] + sat2[ ,warehouseStockMoscowTransit] 
+
+#присвоили номер недели текущим остаткам
+names(stockComponentsMoscow)[3]<-as.character(i)
+
+
+soldplanMSK<-merge(soldplanMSK, stockComponentsMoscow, by ="Код", all.x= TRUE)
+soldplanMSK <- soldplanMSK [ , c(1:(ncol(soldplanMSK)-2),ncol(soldplanMSK))]
+}
+
+
+#сортировка по убыванию выручки
+soldplanMSK<- soldplanMSK [order(-soldplanMSK$выручка),] 
+
+
+for (i in 1:nrow(soldplanMSK) ) {
+  # количество дней, когда остаток превышает страховой запас, т.е. 25% от плана продаж
+vec <- soldplanMSK [i, 9:(ncol(soldplanMSK)-1)] > soldplanMSK [i,3]*0.25
+#расчет процента дней, когда остаток превышал страховой запас от общего количества дней
+soldplanMSK$ЛогСервисПроц [i] <- round(length(vec[vec==TRUE]) /length(9:(ncol(soldplanMSK)-1))*100)
+
+}
+
+row.names(soldplanMSK) <- NULL
+
+MSKstockArch <- soldplanMSK [ , c(1,2,3, 10:ncol(soldplanMSK)-1)]
+write.csv(MSKstockArch, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/MSKstockArch.csv")
+
+
+soldplanMSK <- soldplanMSK [ , c(1:8, ncol(soldplanMSK))] 
+
+write.csv(soldplanMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanMSK.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# получаем количество дней, в которых регистрировались остатки на складах
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки", full.names = TRUE)
+#
+datesNumber<- length(flist) 
+
+##
+##загружаем данные по остаткам на всех складах
+##
+
+
+for (i in 1:datesNumber ) {
+  
+  
+  
+  
+  allStock<-read_excel(paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки/все остатки ", i, ".xls", sep=""))
+  #заменить NA на ноль
+  allStock[is.na(allStock)]<-0
+  
+  header<-allStock[1,]
+  
+  
+  #обработать содержимое для получения цифр
+  write.csv(allStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv")
+  
+  sat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+                , skip=1, na.strings=c(" ", NA), stringsAsFactors=FALSE) 
+  
+  write.csv(sat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", )
+  
+  sat2<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+                 skip=2) 
+  
+  
+  #добавить заголовки стобцов
+  names(sat2)<-c(0,0,header)
+  
+  
+  warehouseStockSPb<-match("Санкт-Петербург,Склад продажи", colnames(sat2))
+  
+  stockComponentsSPb<-sat2[,c(4,6,warehouseStockSPb)]
+  #names(stockComponentsMoscow)<-c("code", "item")
+  
+  sat2[is.na(sat2)]<-0
+  
+  
+  
+  
+  
+  
+  #вычесть из остатков резервы и добавить 
+  stockComponentsSPb[ ,3]<- sat2[ ,warehouseStockSPb] 
+  
+  #присвоили номер недели текущим остаткам
+  names(stockComponentsSPb)[3]<-as.character(i)
+  
+  
+  soldplanSPb<-merge(soldplanSPb, stockComponentsSPb, by ="Код", all.x= TRUE)
+  soldplanSPb <- soldplanSPb [ , c(1:(ncol(soldplanSPb)-2),ncol(soldplanSPb))]
+}
+
+
+#сортировка по убыванию выручки
+soldplanSPb<- soldplanSPb [order(-soldplanSPb$выручка),] 
+
+
+for (i in 1:nrow(soldplanSPb) ) {
+  # количество дней, когда остаток превышает страховой запас, т.е. 25% от плана продаж
+  vec <- soldplanSPb [i, 9:(ncol(soldplanSPb)-1)] > soldplanSPb [i,3]*0.25
+  #расчет процента дней, когда остаток превышал страховой запас от общего количества дней
+  soldplanSPb$ЛогСервисПроц [i] <- round(length(vec[vec==TRUE]) /length(9:(ncol(soldplanSPb)-1))*100)
+  
+}
+
+row.names(soldplanSPb) <- NULL
+
+SPbstockArch <- soldplanSPb [ , c(1,2,3, 10:ncol(soldplanSPb)-1)]
+write.csv(SPbstockArch, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/SPbstockArch.csv")
+
+
+soldplanSPb <- soldplanSPb [ , c(1:8, ncol(soldplanSPb))] 
+
+write.csv(soldplanSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanSPb.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Новосибирск
+
+# получаем количество дней, в которых регистрировались остатки на складах
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки", full.names = TRUE)
+#
+datesNumber<- length(flist) 
+
+##
+##загружаем данные по остаткам на всех складах
+##
+
+
+for (i in 1:datesNumber ) {
+  
+  
+  
+  
+  allStock<-read_excel(paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/Остатки/все остатки ", i, ".xls", sep=""))
+  #заменить NA на ноль
+  allStock[is.na(allStock)]<-0
+  
+  header<-allStock[1,]
+  
+  
+  #обработать содержимое для получения цифр
+  write.csv(allStock, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv")
+  
+  sat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+                , skip=1, na.strings=c(" ", NA), stringsAsFactors=FALSE) 
+  
+  write.csv(sat, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", )
+  
+  sat2<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/all stock.сsv", 
+                 skip=2) 
+  
+  
+  #добавить заголовки стобцов
+  names(sat2)<-c(0,0,header)
+  
+  
+  
+  warehouseStockNSK<- match("Новосибирск, Склад продажи", colnames(sat2))
+  warehouseStockNSKBranch<- match("Склад Транзитный  для НВС", colnames(sat2))
+  warehouseStockNSKTransit<- match("ТРАНЗИТНЫЙ СКЛАД", colnames(sat2))
+  
+  stockComponentsNSK<-sat2[,c(4,6,warehouseStockNSK)]
+  #names(stockComponentsNSK)<-c("code", "item")
+  
+  sat2[is.na(sat2)]<-0
+  
+  
+  
+  
+  
+  
+  #вычесть из остатков резервы и добавить 
+  stockComponentsNSK [ ,3]<- sat2[ ,warehouseStockNSK]+sat2[ ,warehouseStockNSKBranch] + sat2[ ,warehouseStockNSKTransit] 
+  
+  #присвоили номер недели текущим остаткам
+  names(stockComponentsNSK)[3]<-as.character(i)
+  
+  
+  soldplanNSK<-merge(soldplanNSK, stockComponentsNSK, by ="Код", all.x= TRUE)
+  soldplanNSK <- soldplanNSK [ , c(1:(ncol(soldplanNSK)-2),ncol(soldplanNSK))]
+}
+
+
+#сортировка по убыванию выручки
+soldplanNSK<- soldplanNSK [order(-soldplanNSK$выручка),] 
+
+
+for (i in 1:nrow(soldplanNSK) ) {
+  # количество дней, когда остаток превышает страховой запас, т.е. 25% от плана продаж
+  vec <- soldplanNSK [i, 9:(ncol(soldplanNSK)-1)] > soldplanNSK [i,3]*0.25
+  #расчет процента дней, когда остаток превышал страховой запас от общего количества дней
+  soldplanNSK$ЛогСервисПроц [i] <- round(length(vec[vec==TRUE]) /length(9:(ncol(soldplanNSK)-1))*100)
+  
+}
+
+row.names(soldplanNSK) <- NULL
+
+NSKstockArch <- soldplanNSK [ , c(1,2,3, 10:ncol(soldplanNSK)-1)]
+vecname <- rep("д", each=ncol(NSKstockArch))
+colnames(NSKstockArch) <- vecname
+names<- c("Код", "наименование", "план продаж", c (1:(ncol(NSKstockArch)-3)) )
+NSKstockArch <- rbind(names, NSKstockArch)
+write.csv(NSKstockArch, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/NSKstockArch.csv")
+#write.table( NSKstockArch, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/NSKstockArch.csv", sep=",", col.names=FALSE)
+
+soldplanNSK <- soldplanNSK [ , c(1:8, ncol(soldplanNSK))] 
+
+write.csv(soldplanNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/soldplanNSK.csv")
+
+
+
+# скопировать все полученные после расчетов файлы
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов", full.names = TRUE)
+file.copy(flist, paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/Архив/", Sys.Date(), sep = ""))
+
+
+
+
+
+
+
+
+
+
+# ЗАПУСКАЕТСЯ ЕЖЕДНЕВНО
+# По филиалам:
+# 1.  Стоимостная величина остатков с низкой оборачиваемостью (неликвидов)
+# 2.	История изменения стоимости (неликвидов) - График
+# 3.	Стоимость необеспеченных заказов 
+# 4.	История выполнения плана продаж по позициям (план/факт/ % выполн / лог сервис)
+
+# себестоимость нелеквидов МСК
+colnames (finishedGoodsList) [1] <- "код"
+surplusCostMSK <-  merge(surplusMSKFilter, finishedGoodsList, by ="код", all.x= TRUE)
+surplusCostMSK$СтоимНелеквид <- surplusCostMSK [ ,3] * as.numeric(surplusCostMSK [ ,9])
+surplusCostMSK <- surplusCostMSK [ , c(1:7, 10)]
+surplusCostMSK[is.na(surplusCostMSK)]<-0
+write.csv(surplusCostMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/surplusCostMSK.csv")
+MSKsurplus<-round(sum(surplusCostMSK$СтоимНелеквид), digits=0)
+
+
+# себестоимость нелеквидов СПб
+surplusCostSPb <-  merge(surplusSPbFilter, finishedGoodsList, by ="код", all.x= TRUE)
+surplusCostSPb$СтоимНелеквид <- surplusCostSPb [ ,3] * as.numeric(surplusCostSPb [ ,9])
+surplusCostSPb <- surplusCostSPb [ , c(1:7, 10)]
+surplusCostSPb[is.na(surplusCostSPb)]<-0
+write.csv(surplusCostSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/surplusCostSPb.csv")
+SPbsurplus<-round(sum(surplusCostSPb$СтоимНелеквид), digits =0)
+
+
+# себестоимость нелеквидов НСК
+surplusCostNSK <-  merge(surplusNSKFilter, finishedGoodsList, by ="код", all.x= TRUE)
+surplusCostNSK$СтоимНелеквид <- surplusCostNSK [ ,3] * as.numeric(surplusCostNSK [ ,9])
+surplusCostNSK <- surplusCostNSK [ , c(1:7, 10)]
+surplusCostNSK[is.na(surplusCostNSK)]<-0
+write.csv(surplusCostNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/surplusCostNSK.csv")
+NSKsurplus<-round(sum(surplusCostNSK$СтоимНелеквид), digits=0)
+
+
+#сводная таблица по неликвидам для всех филиалов
+surplusBranch <- data.frame(c(1:3), c(1:3))
+branchList<- c("МСК", "СПб", "НСК")
+surplusBranch [ ,1 ] <-branchList 
+surplusBranch [ ,2 ] <- c(MSKsurplus, SPbsurplus, NSKsurplus)
+colnames(surplusBranch)<- c("Филиал", "Стоим-ть нелеквидов, руб")
+#surplusBranch [,2]<- formatC(surplusBranch [,2], format="d", big.mark=',') #форматирование разрядов
+
+#surplusBranch <- t(surplusBranch)
+
+write.csv(surplusBranch, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/surplusBranch.csv")
+
+# скопировать все полученные после расчетов файлы
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов", full.names = TRUE)
+file.copy(flist, paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/Архив/", Sys.Date(), sep = ""), overwrite = TRUE)
+
+
+
+
+
+
+
+
+### 
+### 
+### сводная динамика
+
+#перечень архивных папок для составления графика динамики изменения неликвидных позиций
+flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/Архив/", full.names = TRUE)
+flist<-as.data.frame(flist)
+
+setwd("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/Архив/")
+
+
+
+###
+###
+###
+# Формирование сводной таблицы по денежным остаткам в неликвидах на каждую дату
+# скрипт пропускает даты, в которых исходный отчет не сформирован
+surplusHistory<- data.frame(c("МСК",  "СПб", "НСК"))
+
+for (i in 1:nrow(flist)) {
+  #ERROR HANDLING
+  possibleError <- tryCatch(
+    
+    u<-read.csv(paste(flist[i,1], "/", "surplusBranch",  ".csv",  sep="")),
+    error=function(e) e
+    
+    
+  )
+  
+  if(inherits(possibleError, "error")) next
+  #print(i) 
+  print(str_sub(flist [i,1], start= -8))
+  
+  
+  #REAL WORK
+  #surplusHistory <- read.csv(paste(flist[i,1], "/", "surplusBranch",  ".csv",  sep=""))
+  
+
+  colnames (u) [3]<- print(str_sub(flist [i,1], start= -8)) # присваем дату в качестве названия колонки с количеством за эту дату
+  r<-as.data.frame( u [ ,3])
+  names(r) <- names (u) [3]
+  surplusHistory<- cbind(surplusHistory, r);
+ # surplusHistory <- surplusHistory [ , c(1:ncol(surplusHistory)-2,ncol(surplusHistory))]
+}  #end for
+
+
+
+surplusHistory <- t(surplusHistory)
+colnames(surplusHistory) <- surplusHistory [1 ,]
+surplusHistory <- surplusHistory [-1 ,]
+
+
+surplusHistory <- as.matrix(surplusHistory)
+mode(surplusHistory) <- "numeric"
+surplusHistory <- as.data.frame(surplusHistory)
+
+
+
+write.csv(surplusHistory, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/surplusHistory.csv", row.names=TRUE)
+
