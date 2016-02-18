@@ -3,6 +3,7 @@
 library(shiny)
 library(googleVis)
 
+
 shinyServer(function(input, output) {
   diamonds<- read.csv ("report.csv")
   MSKdeliver<-read.csv ("arrivalPlanMSK.csv")
@@ -45,16 +46,29 @@ shinyServer(function(input, output) {
   surplusSPbFilter<-  read.csv ("surplusSPbFilter.csv")
   surplusNSKFilter<-  read.csv ("surplusNSKFilter.csv")
   
+  soldplanMSK<- read.csv ("soldplanMSK.csv")
+  soldplanSPb<- read.csv ("soldplanSPb.csv")
+  soldplanNSK<- read.csv ("soldplanNSK.csv")
+  salesAnalysis<- read.csv ("salesAnalysis.csv") [2:4] #убрать первую колонку с навзаниями для последующего корректного отображения
+  
+  
+  
+  MSKstockArch <- read.csv("MSKstockArch.csv")
+  SPbstockArch <- read.csv("SPbstockArch.csv")
+  NSKstockArch <- read.csv("NSKstockArch.csv")
+  
+  priorityProduction <- read.csv("priorityProduction.csv")
+  
   
   #  components<-read.csv("components5.csv")
   
   # a large table, reative to input$show_vars
   output$mytable1 <- renderDataTable({
-     diamonds [, input$show_vars, drop = FALSE]
+    diamonds [, input$show_vars, drop = FALSE]
   }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
   #list(lengthMenu = c(5, 30, 50), pageLength = 5)
   #[, input$show_vars, drop = FALSE]
- 
+  
   
   # sorted columns are colored now because CSS are attached to them
   output$mytable2 <- renderDataTable({
@@ -65,16 +79,16 @@ shinyServer(function(input, output) {
   output$mytable3 <- renderDataTable({
     NSKdeliver
   }, options = list(orderClasses = TRUE, scrollY = '600px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
-    # либо =list(lengthMenu = c(5, 30, 50), pageLength = 5))
+  # либо =list(lengthMenu = c(5, 30, 50), pageLength = 5))
   
   
   output$mytable4 <- renderDataTable({
     MSKdeliver
   }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #добавили высоту таблицы и скролл вверх-вниз
-    #list(lengthMenu = c(5, 30, 50), pageLength = 50))
+  #list(lengthMenu = c(5, 30, 50), pageLength = 50))
   
   
-
+  
   
   output$mytable5 <- renderDataTable({
     topstock
@@ -130,13 +144,13 @@ shinyServer(function(input, output) {
   }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
   
   
-
+  
   
   output$mytable13 <- renderDataTable({
     ComponentConsumption1
   }, options = list(lengthMenu = c(5, 30, 50), pageLength = 5)) #добавили высоту таблицы и скролл вверх-вниз
   
- 
+  
   
   
   output$mytable14 <- renderDataTable({
@@ -224,6 +238,43 @@ shinyServer(function(input, output) {
   
   
   
+  output$mytable29 <- renderDataTable({
+    soldplanMSK
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  output$mytable30 <- renderDataTable({
+    soldplanSPb
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  output$mytable31 <- renderDataTable({
+    soldplanNSK
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  
+  
+  output$mytable32 <- renderDataTable({
+    MSKstockArch
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE, header= FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  
+  output$mytable33 <- renderDataTable({
+    SPbstockArch
+  }, options = list(orderClasses = TRUE, scrollY = '300px', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  output$mytable34 <- renderDataTable({
+    NSKstockArch
+  }, options = list(orderClasses = TRUE, scrollY = '300px', extensions = 'FixedColumns', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
+  
+  output$mytable35 <- renderDataTable({
+    priorityProduction
+  }, options = list(orderClasses = TRUE, scrollY = '300px', extensions = 'FixedColumns', paging = FALSE )) #добавили высоту таблицы и скролл вверх-вниз
+  
   
   
   # reactive programming
@@ -287,13 +338,19 @@ shinyServer(function(input, output) {
   })
   
   
+  #   df=data.frame(country=c("Москва", "Санкт-Петербург", "Новосибирск"), 
+  #                 план =c(MSKplanSales,SPbplanSales,NSKplanSales),
+  #                 факт =c(MSKrealSales,SPbrealSales,NSKrealSales))
+  #   
   
   
+  df1=data.frame(country=c(colnames(salesAnalysis)), 
+                план =  as.numeric(salesAnalysis [2,]),
+                факт =as.numeric(salesAnalysis [1,]))
   
   
-  df=data.frame(country=c("Москва", "Санкт-Петербург", "Новосибирск"), 
-                факт =c(40,45,60), 
-                план =c(45,35,45))
+  #df= read.csv(salesAnalysis.csv)
+  
   
   output$googleSales <- renderGvis(gvisBarChart(
     
@@ -307,10 +364,65 @@ shinyServer(function(input, output) {
     
     
   ))
-  output$vertSales <- renderGvis(gvisColumnChart(df))
+  
+  
+  df<- read.csv ("surplusHistory.csv")
+  
+  row.names(df)<- df [ ,1]
+  df<- df [ ,-1]
+  
+  df=data.frame(country=row.names(df), 
+                МСК=df[ ,1], 
+                СПб=df[ ,2],
+                НСК=df[ ,3]
+  )
+  
   output$lineSales <- renderGvis(gvisLineChart(df))
   
   
+  output$vertSales <- renderGvis(gvisColumnChart(df1))
+  #output$lineSales <- renderGvis(gvisLineChart(df))
+  
+  
+#   # оборачиваемость
+BranchTurn<-read.csv ("BranchTurn.csv")
+BranchTurnMSK <- as.data.frame(BranchTurn [1,])
+output$BranchTurnMSK<-renderGvis({ gvisGauge(BranchTurnMSK, 
+                                      options=list(min=0, max=3, greenFrom=0.7,
+                                                   greenTo=1.5, yellowFrom=1.5, yellowTo=3,
+                                                   redFrom=0, redTo=0.7, width=200, height=200)) 
+
+
+})
+
+BranchTurnSPb <- as.data.frame(BranchTurn [2,])
+output$BranchTurnSPb<-renderGvis({ gvisGauge(BranchTurnSPb, 
+                                             options=list(min=0, max=3, greenFrom=0.7,
+                                                          greenTo=1.5, yellowFrom=1.5, yellowTo=3,
+                                                          redFrom=0, redTo=0.7, width=200, height=200)) 
+                                
+                                
+})
+
+BranchTurnNSK <- as.data.frame(BranchTurn [3,])
+output$BranchTurnNSK<-renderGvis({ gvisGauge(BranchTurnNSK, 
+                                             options=list(min=0, max=3, greenFrom=0.7,
+                                                          greenTo=1.5, yellowFrom=1.5, yellowTo=3,
+                                                          redFrom=0, redTo=0.7, width=200, height=200)) 
+                                   
+                                   
+})
+
+
+
+
+
+
+
+
+
+
+
   
   
   topstockbars<-read.csv ("top stock bars.csv")
