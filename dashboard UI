@@ -464,7 +464,11 @@ ui <- dashboardPage( skin = "blue",
                                              
                                              h4("Позиции в дефиците или по которым может возникнуть дефицит в течение 4 недель"),
                                              br(),
-                                             dataTableOutput('mytable23'),
+                                             
+                                             box(title = "Позиции в дефиците или по которым может возникнуть дефицит в течение 4 недель", width=12,  status = "success", dataTableOutput('mytable23'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
+                                             
+                                            
                                              br(),
                                              br(),
                                              
@@ -472,7 +476,10 @@ ui <- dashboardPage( skin = "blue",
                                              h4("Излишки, которые образуются в течение 4 ближайших недель. Текущие остатки + приход- расход за 4 недели."),
                                              h4("В колонке ОБОРАЧИВАЕМОСТЬ указано количество мес на сколько хватит товара."),
                                              br(),
-                                             dataTableOutput('mytable26'),
+                                             
+                                             box(title = "Излишки, которые образуются в течение 4 ближайших недель. Текущие остатки + приход- расход за 4 недели.", width=12,  status = "success", dataTableOutput('mytable26'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
+                                         
                                              br(),
                                              br(),
                                              br(),
@@ -484,16 +491,26 @@ ui <- dashboardPage( skin = "blue",
                                              
                                              h4("Плановые приходы в ближайшие недели, начиная с текущей (понедельно)"),
                                              h4("Информация из 1С на основе подписанных планов и зарегистированных допзаказов"),
-                                             dataTableOutput('mytable4'),
+                                             
+                                             box(title = "Плановые приходы в ближайшие недели, начиная с текущей (понедельно)", width=12,  status = "success", dataTableOutput('mytable4'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
+                                             
                                              br(),
                                              br(),
                                              
                                              h4("Плановые продажи"),
-                                             dataTableOutput('mytable17'),
                                              
+                                             box(title = "Плановые продажи", width=12,  status = "success", dataTableOutput('mytable17'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
+                                             
+                                                                                         
                                              h4("Расчетные приходы в ближайшие недели, начиная с текущей (понедельно)"),
                                              h4("Информация из 1С на основе остатков, резервов и планов продаж"),
-                                             dataTableOutput('mytable9')),
+                                             
+                                             
+                                             box(title = "Плановые приходы в ближайшие недели, начиная с текущей (понедельно)", width=12,  status = "success", dataTableOutput('mytable9'), solidHeader = TRUE,
+                                                 collapsible = TRUE)
+                                             ),
                                     
                                     
                                     
@@ -502,7 +519,12 @@ ui <- dashboardPage( skin = "blue",
                                              
                                              h4("Позиции в дефиците или по которым может возникнуть дефицит в течение 4 недель"),
                                              br(),
-                                             dataTableOutput('mytable24'),
+                                          
+                                             
+                                             box(title = "Позиции в дефиците или по которым может возникнуть дефицит в течение 4 недель", width=12,  status = "warning", dataTableOutput('mytable24'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
+                                             
+                                             
                                              br(),
                                              br(),
                                              
@@ -510,7 +532,10 @@ ui <- dashboardPage( skin = "blue",
                                              h4("Излишки, которые образуются в течение 4 ближайших недель. Текущие остатки + приход- расход за 4 недели."),
                                              h4("В колонке ОБОРАЧИВАЕМОСТЬ указано количество мес на сколько хватит товара."),
                                              br(),
-                                             dataTableOutput('mytable27'),
+                                                                            
+                                             box(title = "Излишки, которые образуются в течение 4 ближайших недель. Текущие остатки + приход- расход за 4 недели.", width=12,  status = "warning", dataTableOutput('mytable27'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
+                                             
                                              br(),
                                              br(),
                                              br(),
@@ -522,16 +547,25 @@ ui <- dashboardPage( skin = "blue",
                                              
                                              h4("Плановые приходы в ближайшие недели, начиная с текущей (понедельно)"),
                                              h4("Информация из 1С на основе подписанных планов и зарегистированных допзаказов"),
-                                             dataTableOutput('mytable2'),
+                                             
+                                             
+                                             box(title = "Плановые приходы в ближайшие недели, начиная с текущей (понедельно)", width=12,  status = "warning", dataTableOutput('mytable2'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
+                                             
+                                             
                                              br(),
                                              br(),
                                              
                                              h4("Плановые продажи"),
-                                             dataTableOutput('mytable18'),
+                                                                                          
+                                             box(title = "Плановые продажи", width=12,  status = "warning", dataTableOutput('mytable18'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
                                              
                                              h4("Расчетные приходы в ближайшие недели, начиная с текущей (понедельно)"),
                                              h4("Информация из 1С на основе остатков, резервов и планов продаж"),
-                                             dataTableOutput('mytable10')),
+                                             
+                                    box(title = "Информация из 1С на основе остатков, резервов и планов продаж", width=12,  status = "warning", dataTableOutput('mytable10'), solidHeader = TRUE,
+                                        collapsible = TRUE)),
                                     
                                     
                                     
@@ -541,7 +575,11 @@ ui <- dashboardPage( skin = "blue",
                                              
                                              h4("Позиции в дефиците или по которым может возникнуть дефицит в течение 4 недель"),
                                              br(),
-                                             dataTableOutput('mytable25'),
+                                             
+                                             
+                                             box(title = "Позиции в дефиците или по которым может возникнуть дефицит в течение 4 недель", width=12,  status = "primary", dataTableOutput('mytable25'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
+                                             
                                              br(),
                                              br(),
                                              
@@ -549,7 +587,11 @@ ui <- dashboardPage( skin = "blue",
                                              h4("Излишки, которые образуются в течение 4 ближайших недель. Текущие остатки + приход- расход за 4 недели."),
                                              h4("В колонке ОБОРАЧИВАЕМОСТЬ указано количество мес на сколько хватит товара."),
                                              br(),
-                                             dataTableOutput('mytable28'),
+                                                                                        
+                                             box(title = "Излишки, которые образуются в течение 4 ближайших недель. Текущие остатки + приход- расход за 4 недели.", width=12,  status = "primary", dataTableOutput('mytable28'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
+                                             
+                                             
                                              br(),
                                              br(),
                                              br(),
@@ -561,16 +603,28 @@ ui <- dashboardPage( skin = "blue",
                                              br(),
                                              h4("Плановые приходы в ближайшие недели, начиная с текущей (понедельно)"),
                                              h4("Информация из 1С на основе подписанных планов и зарегистированных допзаказов"),
-                                             dataTableOutput('mytable3'), 
+                                                                          
+                                             
+                                             box(title = "Плановые приходы в ближайшие недели, начиная с текущей (понедельно)", width=12,  status = "primary", dataTableOutput('mytable3'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
+                                             
+                                             
                                              br(),
                                              br(),
                                              
                                              h4("Плановые продажи"),
-                                             dataTableOutput('mytable19'),
+                                                                                        
+                                             
+                                             box(title = "Плановые продажи", width=12,  status = "primary", dataTableOutput('mytable19'), solidHeader = TRUE,
+                                                 collapsible = TRUE),
                                              
                                              h4("Расчетные приходы в ближайшие недели, начиная с текущей (понедельно)"),
                                              h4("Информация из 1С на основе остатков, резервов и планов продаж"),
-                                             dataTableOutput('mytable11')),
+                                             
+                                             box(title = "Расчетные приходы в ближайшие недели, начиная с текущей (понедельно)", width=12,  status = "primary", dataTableOutput('mytable11'), solidHeader = TRUE,
+                                                 collapsible = TRUE)
+                                             
+                                            ),
                                     
                                     tabPanel('Расчетный выпуск ГП', 
                                              
