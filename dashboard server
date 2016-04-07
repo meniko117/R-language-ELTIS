@@ -576,12 +576,6 @@ output$BranchTurnNSK<-renderGvis({ gvisGauge(BranchTurnNSK,
     )
   )
   
-  
-  
-  
-  
-  
-  
-  
+
   
   })
