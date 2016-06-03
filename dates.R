@@ -591,7 +591,7 @@ dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+2<=12,year(Sys.Date()
 colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
 
 #номера колонок, относ€щихс€ к текущему мес€цу слеюущему за текущим
-colMonth<-which (arrivalPlanNSK[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+1, month(Sys.Date())+2-12) )
+colMonth<-which (arrivalPlanNSK[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12) )
 
 
 arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)]<- round(data.matrix(arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)], rownames.force = NA)+  

@@ -250,7 +250,7 @@ stockAtHand<-as.matrix(weeklyStock[,3:54]) # матрица с остатками для передачи в 
 ##
 
 #rat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/товары в пути.xls",skip=2, col_names = FALSE)
-rat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/товары в пути.csv",skip=2, sep=",", dec=",")
+rat<-read.csv("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/товары в пути.csv",skip=2, sep=",", dec=".")
 #rat<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/товары в пути.xls", skip=2)
 nr<-nrow(rat)
 
