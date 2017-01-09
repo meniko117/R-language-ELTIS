@@ -34,7 +34,7 @@ cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, Numer
             
             for (int i = 0; i < nrow; i++) {         // ïðîõîä ïî ðÿäàì ÍÎÂÛé ÖÈÊË
             
-            for (int j = t+2; j < 50; j++) {           // ïðîõîä ïî êîëîíêàì â ðÿäó äëÿ ñìåùåíèÿ ñãåíåðèðîâàííîãî çàêàçà (t+1) !!
+            for (int j = t+1; j < 50; j++) {           // ïðîõîä ïî êîëîíêàì â ðÿäó äëÿ ñìåùåíèÿ ñãåíåðèðîâàííîãî çàêàçà (t+1) !! ÇÀÌÅÍÀ 2 íà 1
             //íà áîëåå ðàííèé ñðîê ðàâíûé "ñðîêó äîñòàâêè"
             
             out (i+nrow,j) = out(i+nrow, j+(p(i,2))); //  "p(i,2)" óìåíüøèòü åùå íà ÅÄÈÍÈÖÓ?
@@ -44,7 +44,7 @@ cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, Numer
             
             }
             
-            for (int r = t+2; r < ncol; r++) {         // ÄÎÁÀÂËÅÍÍÛÉ ÖÈÊË ïðîõîä ïî ÊÎËÈ×ÅÑÒÂÓ ÊÎËÎÍÎÊ !!
+            for (int r = t+1; r < ncol; r++) {         // ÄÎÁÀÂËÅÍÍÛÉ ÖÈÊË ïðîõîä ïî ÊÎËÈ×ÅÑÒÂÓ ÊÎËÎÍÎÊ !! ÇÀÌÅÍÀ 2 íà 1
             
             for (int i = 0; i < nrow; i++) {
             

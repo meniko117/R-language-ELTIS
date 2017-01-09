@@ -323,7 +323,7 @@ monthDigit<- ifelse(month(Sys.Date())<10, paste(0, month(Sys.Date()), sep = "" )
 # monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
 dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
 colNumberProduction<- match(dateHeader, colnames(fullRangeProdPlan))
-#colNumberProduction<- match("X28.10.15", colnames(fullRangeProdPlan))
+#colNumberProduction<- match("X28.12.16", colnames(fullRangeProdPlan))
 
 
 #номера колонок, относ€щихс€ к текущему мес€цу
@@ -343,7 +343,8 @@ arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)]<- round(as.numeric(data.mat
 
 
 # поиск колонки в общем плане производства, где содержитс€ план на мес€ц —Ћ≈ƒ”ёў»… за текущим
-monthDigit<- ifelse(month(Sys.Date())+1<10, paste(0, month(Sys.Date())+1, sep = "" ), month(Sys.Date())+1  )
+monthDigit<-ifelse(month(Sys.Date())+1<10 | month(Sys.Date())+1>12, 
+                   paste(0, month(Sys.Date())+1-ifelse(month(Sys.Date())+1>12, 12, 0), sep = "" ), month(Sys.Date())+1)
 # monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
 # monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
 dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+1<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
@@ -363,7 +364,8 @@ arrivalPlanMSK [4:nrow(arrivalPlanMSK), c(colMonth)]<- round(data.matrix(arrival
 
 
 # поиск колонки в общем плане производства через 2 мес
-monthDigit<- ifelse(month(Sys.Date())+2<10, paste(0, month(Sys.Date())+2, sep = "" ), month(Sys.Date())+2  )
+monthDigit<-ifelse(month(Sys.Date())+2<10 | month(Sys.Date())+2>12, 
+                   paste(0, month(Sys.Date())+2-ifelse(month(Sys.Date())+2>12, 12, 0), sep = "" ), month(Sys.Date())+2)
 # monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
 # monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
 dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+2<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
@@ -457,7 +459,8 @@ arrivalPlanSPb [4:nrow(arrivalPlanSPb), c(colMonth)]<- round(as.numeric(data.mat
 
 
 # поиск колонки в общем плане производства, где содержитс€ план на мес€ц —Ћ≈ƒ”ёў»… за текущим
-monthDigit<- ifelse(month(Sys.Date())+1<10, paste(0, month(Sys.Date())+1, sep = "" ), month(Sys.Date())+1  )
+monthDigit<-ifelse(month(Sys.Date())+1<10 | month(Sys.Date())+1>12, 
+                   paste(0, month(Sys.Date())+1-ifelse(month(Sys.Date())+1>12, 12, 0), sep = "" ), month(Sys.Date())+1)
 # monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
 # monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
 dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+1<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
@@ -477,7 +480,8 @@ arrivalPlanSPb [4:nrow(arrivalPlanSPb), c(colMonth)]<- round(data.matrix(arrival
 
 
 # поиск колонки в общем плане производства, где содержитс€ план на мес€ц —Ћ≈ƒ”ёў»… за текущим
-monthDigit<- ifelse(month(Sys.Date())+2<10, paste(0, month(Sys.Date())+2, sep = "" ), month(Sys.Date()) +2 )
+monthDigit<- ifelse(month(Sys.Date())+2<10 | month(Sys.Date())+2>12, 
+                    paste(0, month(Sys.Date())+2-ifelse(month(Sys.Date())+2>12, 12, 0), sep = "" ), month(Sys.Date())+2)
 # monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
 # monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
 dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+2<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
@@ -564,7 +568,8 @@ arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)]<- round(as.numeric(data.mat
 
 
 # поиск колонки в общем плане производства, где содержитс€ план на мес€ц —Ћ≈ƒ”ёў»… за текущим
-monthDigit<- ifelse(month(Sys.Date())+1<10, paste(0, month(Sys.Date())+1, sep = "" ), month(Sys.Date())+1  )
+monthDigit<- ifelse(month(Sys.Date())+1<10 | month(Sys.Date())+1>12, 
+                    paste(0, month(Sys.Date())+1-ifelse(month(Sys.Date())+1>12, 12, 0), sep = "" ), month(Sys.Date())+1)
 # monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
 # monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
 dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+1<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")
@@ -584,7 +589,8 @@ arrivalPlanNSK [4:nrow(arrivalPlanNSK), c(colMonth)]<- round(data.matrix(arrival
 
 
 # поиск колонки в общем плане производства, где содержитс€ план на мес€ц —Ћ≈ƒ”ёў»… за текущим
-monthDigit<- ifelse(month(Sys.Date())+2<10, paste(0, month(Sys.Date())+2, sep = "" ), month(Sys.Date())+2  )
+monthDigit<- ifelse(month(Sys.Date())+2<10 | month(Sys.Date())+2>12, 
+                    paste(0, month(Sys.Date())+2-ifelse(month(Sys.Date())+2>12, 12, 0), sep = "" ), month(Sys.Date())+2)
 # monthDigit <- ifelse (monthDigit<=12, monthDigit, monthDigit-12)
 # monthDigit<-ifelse(monthDigit<10, paste(0, monthDigit, sep=""), monthDigit)
 dateHeader<- paste(28,monthDigit, ifelse(month(Sys.Date())+2<=12,year(Sys.Date()), year(Sys.Date())+1), sep =".")

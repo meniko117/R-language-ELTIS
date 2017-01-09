@@ -92,7 +92,8 @@ colnames(salesMoscow) [c(6:57)] <-colnames(alltimeHeader)
 #номера колонок, относ€щихс€ к “≈ ”ў≈ћ” мес€цу
 colMonth<- which (alltimeHeader[1,] %in% month(Sys.Date()) )
 # присваиваем потребл€емые количества соответствущим недел€м “≈ ”ў≈√ќ мес€ца
-salesMoscow [ ,colMonth+5 ]<- round(salesMoscow [ ,59] /length(colMonth))
+salesMoscow [ ,colMonth+5 ]<- ceiling(salesMoscow [ ,59] /length(colMonth))
+
 salesMoscow <- salesMoscow [ ,1:57]
 
 
@@ -116,7 +117,7 @@ salesMoscow[is.na(salesMoscow)]<-0
 #номера колонок, относ€щихс€ к CЋ≈ƒ”ёў≈ћ” мес€цу
 colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12)  )
 # присваиваем потребл€емые количества соответствущим недел€м —Ћ≈ƒ”ёў≈√ќ мес€ца
-salesMoscow [ ,colMonth+5 ]<- round(salesMoscow [ ,59] /length(colMonth))
+salesMoscow [ ,colMonth+5 ]<- ceiling(salesMoscow [ ,59] /length(colMonth))
 salesMoscow <- salesMoscow [ ,1:57]
 
 
@@ -142,7 +143,7 @@ salesMoscow[is.na(salesMoscow)]<-0
 #номера колонок, относ€щихс€ к CЋ≈ƒ”ёў≈ћ” мес€цу
 colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12)  )
 # присваиваем потребл€емые количества соответствущим недел€м —Ћ≈ƒ”ёў≈√ќ мес€ца
-salesMoscow [ ,colMonth+5 ]<- round(salesMoscow [ ,59] /length(colMonth))
+salesMoscow [ ,colMonth+5 ]<- ceiling(salesMoscow [ ,59] /length(colMonth))
 salesMoscow <- salesMoscow [ ,1:57]
 
 # 
@@ -354,7 +355,7 @@ colnames(salesSPb) [c(6:57)] <-colnames(alltimeHeader)
 #номера колонок, относ€щихс€ к “≈ ”ў≈ћ” мес€цу
 colMonth<- which (alltimeHeader[1,] %in% month(Sys.Date()) )
 # присваиваем потребл€емые количества соответствущим недел€м “≈ ”ў≈√ќ мес€ца
-salesSPb [ ,colMonth+5 ]<- round(salesSPb [ ,59] /length(colMonth))
+salesSPb [ ,colMonth+5 ]<- ceiling(salesSPb [ ,59] /length(colMonth))
 salesSPb <- salesSPb [ ,1:57]
 
 
@@ -378,7 +379,7 @@ salesSPb[is.na(salesSPb)]<-0
 #номера колонок, относ€щихс€ к CЋ≈ƒ”ёў≈ћ” мес€цу
 colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12)  )
 # присваиваем потребл€емые количества соответствущим недел€м —Ћ≈ƒ”ёў≈√ќ мес€ца
-salesSPb [ ,colMonth+5 ]<- round(salesSPb [ ,59] /length(colMonth))
+salesSPb [ ,colMonth+5 ]<- ceiling(salesSPb [ ,59] /length(colMonth))
 salesSPb <- salesSPb [ ,1:57]
 
 
@@ -404,7 +405,7 @@ salesSPb[is.na(salesSPb)]<-0
 #номера колонок, относ€щихс€ к CЋ≈ƒ”ёў≈ћ” мес€цу
 colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12)  )
 # присваиваем потребл€емые количества соответствущим недел€м —Ћ≈ƒ”ёў≈√ќ мес€ца
-salesSPb [ ,colMonth+5 ]<- round(salesSPb [ ,59] /length(colMonth))
+salesSPb [ ,colMonth+5 ]<- ceiling(salesSPb [ ,59] /length(colMonth))
 salesSPb <- salesSPb [ ,1:57]
 # 
 # 
@@ -578,7 +579,7 @@ salesNSK<-read_excel("C:/Documents and Settings/smirnov/ћои документы/ћаксим/R п
 mu<-paste ("C:/Documents and Settings/smirnov/ћои документы/ћаксим/R план/ќтчеты дл€ расчетов/план продаж Ќ— -", month(Sys.Date()), ".xls", sep="")
 t<-read_excel(mu)
 colnames(t)<- t [2,] 
-colnames(t)<- t [2,] 
+
 t<- t [3:nrow(t), c(2,4,6)]
 colnames(t)<- c("code", "name", "quantity")
 t[, 1]<- as.numeric(t[ ,1])
@@ -593,7 +594,7 @@ colnames(salesNSK) [c(6:57)] <-colnames(alltimeHeader)
 #номера колонок, относ€щихс€ к “≈ ”ў≈ћ” мес€цу
 colMonth<- which (alltimeHeader[1,] %in% month(Sys.Date()) )
 # присваиваем потребл€емые количества соответствущим недел€м “≈ ”ў≈√ќ мес€ца
-salesNSK [ ,colMonth+5 ]<- round(salesNSK [ ,60] /length(colMonth))
+salesNSK [ ,colMonth+5 ]<- ceiling(salesNSK [ ,59] /length(colMonth))  #60
 salesNSK <- salesNSK [ ,1:57]
 
 
@@ -617,7 +618,7 @@ salesNSK[is.na(salesNSK)]<-0
 #номера колонок, относ€щихс€ к CЋ≈ƒ”ёў≈ћ” мес€цу
 colMonth<-which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12)  )
 # присваиваем потребл€емые количества соответствущим недел€м —Ћ≈ƒ”ёў≈√ќ мес€ца
-salesNSK [ ,colMonth+5 ]<- round(salesNSK [ ,59] /length(colMonth))
+salesNSK [ ,colMonth+5 ]<- ceiling(salesNSK [ ,59] /length(colMonth))
 salesNSK <- salesNSK [ ,1:57]
 
 
@@ -643,7 +644,7 @@ salesNSK[is.na(salesNSK)]<-0
 #номера колонок, относ€щихс€ к CЋ≈ƒ”ёў≈ћ” мес€цу
 colMonth<- which (alltimeHeader[1,] %in% ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12)  )
 # присваиваем потребл€емые количества соответствущим недел€м —Ћ≈ƒ”ёў≈√ќ мес€ца
-salesNSK [ ,colMonth+5 ]<- round(salesNSK [ ,59] /length(colMonth))
+salesNSK [ ,colMonth+5 ]<- ceiling(salesNSK [ ,59] /length(colMonth))
 salesNSK <- salesNSK [ ,1:57]
 # 
 # 

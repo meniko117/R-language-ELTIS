@@ -135,7 +135,7 @@ t<- t [3:nrow(t), c(2,4,6)]
 colnames(t)<- c("код", "name", "quantity")
 t[, 1]<- as.numeric(t[ ,1])
 t[, 3]<- as.numeric(t[ ,3])
-
+finishedGoodsList[,3]<-as.numeric(finishedGoodsList[,3])
 MSKturn <- merge(finishedGoodsList, stockMSK, by ="код", all.x= TRUE)
 MSKturn <- merge(MSKturn, t, by ="код", all.x= TRUE)
 MSKturn[is.na(MSKturn)]<-0

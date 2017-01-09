@@ -2,10 +2,17 @@
 # на текущий месяц
 soldMSK<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/факт продажи МСК.xls", skip =2)
 colnames(soldMSK) <- soldMSK [1, ]
-salesPlanMSK<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж МСК-", month(Sys.Date())-1, ".xls", sep=""))
+salesPlanMSK<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж МСК-", month(Sys.Date()), ".xls", sep=""))
 colnames(salesPlanMSK) <- salesPlanMSK [2, ]
 
-soldplanMSK<-merge(salesPlanMSK, soldMSK, by ="Код", all.x= TRUE)
+soldplanMSK<-merge(salesPlanMSK, soldMSK, by ="Код", all=TRUE)
+
+for (i in 3:nrow(soldplanMSK) ) {
+ifelse(is.na(soldplanMSK[i,4]), soldplanMSK[i,4]<-soldplanMSK[i,11], soldplanMSK[i,4]<-soldplanMSK[i,4])
+}
+
+soldplanMSK<-soldplanMSK[complete.cases(soldplanMSK[,4]),]
+
 soldplanMSK<- soldplanMSK [ ,c(1,4,6, 12, 13, 14)]
 colnames(finishedGoodsList)<- c("Код", "наименование", "себестоимость")
 
@@ -17,10 +24,11 @@ soldplanMSK<-merge(soldplanMSK, finishedGoodsList, by ="Код", all.x= TRUE)
 soldplanMSK<- soldplanMSK [ , c(1:6,8)]
 
 soldplanMSK[is.na(soldplanMSK)]<-0
-soldplanMSK <-soldplanMSK [ c(1:(nrow(salesPlanMSK)-2)), ]
+soldplanMSK <-soldplanMSK [ c(1:(nrow(soldplanMSK)-3)), ]
 
 
 soldplanMSK[soldplanMSK==" "]<- "0"
+
 
 #преобразовываем в числовой формат
 for (i in 3:7 ) {
@@ -52,11 +60,17 @@ write.csv(soldplanMSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R
 
 soldSPb<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/факт продажи СПб.xls", skip =2)
 colnames(soldSPb) <- soldSPb [1, ]
-salesPlanSPb<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж СПб-", month(Sys.Date())-1, ".xls", sep=""))
+salesPlanSPb<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж СПб-", month(Sys.Date()), ".xls", sep=""))
 colnames(salesPlanSPb) <- salesPlanSPb [2, ]
 
 
-soldplanSPb<-merge(salesPlanSPb, soldSPb, by ="Код", all.x= TRUE)
+soldplanSPb<-merge(salesPlanSPb, soldSPb, by ="Код", all= TRUE)
+
+for (i in 3:nrow(soldplanSPb) ) {
+  ifelse(is.na(soldplanSPb[i,4]), soldplanSPb[i,4]<-soldplanSPb[i,11], soldplanSPb[i,4]<-soldplanSPb[i,4])
+}
+
+soldplanSPb<-soldplanSPb[complete.cases(soldplanSPb[,4]),]
 soldplanSPb<- soldplanSPb [ ,c(1,4,6, 12, 13, 14)]
 colnames(finishedGoodsList)<- c("Код", "наименование", "себестоимость")
 
@@ -68,7 +82,7 @@ soldplanSPb<-merge(soldplanSPb, finishedGoodsList, by ="Код", all.x= TRUE)
 soldplanSPb<- soldplanSPb [ , c(1:6,8)]
 
 soldplanSPb[is.na(soldplanSPb)]<-0
-soldplanSPb <-soldplanSPb [ c(1:(nrow(salesPlanSPb)-2)), ]
+soldplanSPb <-soldplanSPb [ c(1:(nrow(soldplanSPb)-3)), ]
 
 
 soldplanSPb[soldplanSPb==" "]<- "0"
@@ -105,10 +119,17 @@ write.csv(soldplanSPb, "C:/Documents and Settings/smirnov/Мои документы/Максим/R
 
 soldNSK<-read_excel("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/факт продажи НСК.xls", skip =2)
 colnames(soldNSK) <- soldNSK [1, ]
-salesPlanNSK<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж НСК-", month(Sys.Date())-1, ".xls", sep=""))
+salesPlanNSK<-read_excel(paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/план продаж НСК-", month(Sys.Date()), ".xls", sep=""))
 colnames(salesPlanNSK) <- salesPlanNSK [2, ]
 
-soldplanNSK<-merge(salesPlanNSK, soldNSK, by ="Код", all.x= TRUE)
+soldplanNSK<-merge(salesPlanNSK, soldNSK, by ="Код", all= TRUE)
+
+
+for (i in 3:nrow(soldplanNSK) ) {
+  ifelse(is.na(soldplanNSK[i,4]), soldplanNSK[i,4]<-soldplanNSK[i,11], soldplanNSK[i,4]<-soldplanNSK[i,4])
+}
+
+soldplanNSK<-soldplanNSK[complete.cases(soldplanNSK[,4]),]
 soldplanNSK<- soldplanNSK [ ,c(1,4,6, 12, 13, 14)]
 colnames(finishedGoodsList)<- c("Код", "наименование", "себестоимость")
 
@@ -120,7 +141,7 @@ soldplanNSK<-merge(soldplanNSK, finishedGoodsList, by ="Код", all.x= TRUE)
 soldplanNSK<- soldplanNSK [ , c(1:6,8)]
 
 soldplanNSK[is.na(soldplanNSK)]<-0
-soldplanNSK <-soldplanNSK [ c(1:(nrow(salesPlanNSK)-2)), ]
+soldplanNSK <-soldplanNSK [ c(1:(nrow(soldplanNSK)-3)), ]
 
 
 soldplanNSK[soldplanNSK==" "]<- "0"
@@ -160,6 +181,7 @@ salesAnalysis <- as.data.frame(t(salesAnalysis))
 colnames(salesAnalysis) <- c("Москва", "Санкт-Петербург", "Новосибирск")
 row.names(salesAnalysis) <- c("факт", "план")
 salesAnalysis <- rbind(salesAnalysis, round(salesAnalysis[1,]/salesAnalysis[2,]*100, digits=1) )
+row.names(salesAnalysis) <- c("факт продажи", "план продаж", "% выполнения")
 write.csv(salesAnalysis, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/salesAnalysis.csv")
 
 
@@ -533,15 +555,12 @@ write.csv(soldplanNSK, "C:/Documents and Settings/smirnov/Мои документы/Максим/R
 
 
 
-
+source('~/Максим/R план/incomingGoods.R')
 
 
 
 # # скопировать все полученные после расчетов файлы
 flist <- list.files("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов", full.names = TRUE)
 file.copy(flist, paste("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/Архив/", Sys.Date(), sep = ""), overwrite = TRUE)
-
-
-
-
+file.copy(flist, "Z:/Смирнов/Отчеты для R", overwrite = TRUE)
 

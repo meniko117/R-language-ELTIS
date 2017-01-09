@@ -429,13 +429,12 @@ weeklySales2 [ ,colMonth ]<- round(componentsConsumption [ ,3] /length(colMonth)
 
 
 
-
 #
 # weeklysales формируем из файла из 1С потребление ПКИ на СЛЕДУЮЩИЙ месяц
 #
 
 mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/потребление компонентов мес ", 
-           ifelse(month(Sys.Date())+1<10,0,""),
+           ifelse(month(Sys.Date())+1<10|| month(Sys.Date())+1>12,0,""),
            ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12) , ".xls", sep="")
 componentsConsumption<-read_excel(mu)
 
@@ -478,7 +477,7 @@ weeklySales2 [ ,colMonth ]<- round(componentsConsumption [ ,3] /length(colMonth)
 #
 
 mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/потребление компонентов мес ", 
-           ifelse(month(Sys.Date())+2<10,0,""),
+           ifelse(month(Sys.Date())+2<10 || month(Sys.Date())+2>12,0,""),
            ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12), ".xls", sep="")
 componentsConsumption<-read_excel(mu)
 
@@ -603,7 +602,7 @@ time<-round(as.numeric(
 #k[,20]<-c(30,50,10,200,40,150,0,80,20,114)
 m [,20:22] <- c(150,10,10,0,40,100,0,80,20,114)
 
-source('~/Максим/R план/RCPPcorrect 2.R')
+source('~/Максим/R план/RCPPcorrect 3.R')
 #Sys.sleep(5)
 # cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, NumericMatrix z, NumericMatrix p, int t) {
 #             int nrow = x.nrow(), ncol = x.ncol();
@@ -814,10 +813,10 @@ weekBegin<- data.frame(matrix(nrow=1, ncol=52))
 # в строке ниже при смене года заменить на первое января наступающего года (в 2-х местах)
 
 
-firstMonday<- as.Date(strptime(paste("01.01.",year(Sys.Date()), sep=""), format = "%d.%m.%Y"))-(wday(as.Date(strptime(paste("01.01.",year(Sys.Date()), sep=""), format = "%d.%m.%Y")))-2)
+firstMonday<- as.Date(strptime(paste("01.01.",year(Sys.Date())+1, sep=""), format = "%d.%m.%Y"))-(wday(as.Date(strptime(paste("01.01.",year(Sys.Date())+1, sep=""), format = "%d.%m.%Y")))-2)
 
 
-weekBegin[1]<-firstMonday+7
+weekBegin[1]<-firstMonday
 
 
 
@@ -949,13 +948,15 @@ alltimeHeaderNextYear <- alltimeHeaderNextYear[ ,3:ncol(alltimeHeaderNextYear)]
 # num[1:(in1-1)]<-c((52-(in1-2)):52)
 # weeklist<-num[1:52]
 
-time <-weekReport #присваиваем номер недели для примера (45)
+time <- weekReport #присваиваем номер недели для примера (45)
 num<-c (((time+2)-25):52, 1:((time+2)-26))
 in1<-match(1,num)
 #in52<-match(52,num)
 num[1:(in1-1)]<-c((52-(in1-2)):52)
 weeklist<-num[1:52]
+weekvec<-c(1:52)# на 24-й неделе происходит сбой из-за того, что в таблице alltimeheader в 24-й колнке всегда указывается текущая неделя
 
+ifelse(time==24, weeklist<-weekvec, weeklist<-num) # на 24-й неделе  присваиваем заготовленный вектор с номерами недель
 
 
 #формируем "заготовку" в загловках колонок номера недель
@@ -991,7 +992,7 @@ for (i in thisyear ) {
 
 
 
-#номера колонок, которым надо присвоит значения следующего года
+#номера колонок, которым надо присвоить значения следующего года
 nextcolnum <- setdiff(as.numeric(names(alltimeHeaderMix)), thisyear) #+2
 
 
@@ -1008,7 +1009,8 @@ for (i in nextcolnum ) {
 
 
 alltimeHeader <- alltimeHeaderMix
-
+# вставлена строка (временно)
+#names(alltimeHeader)[1]<-1
 
 
 
@@ -1128,6 +1130,9 @@ row.names(reportOrdersFilter) <- NULL
 row.names(reportOrdersFilterWeek) <- NULL
 
 
+
+
+
 write.csv(reportOrdersFilter, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/OrdersFilter.csv")
 write.csv(reportOrdersFilterWeek, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/reportOrdersFilterWeek.csv")
 
@@ -1237,12 +1242,23 @@ for (i in 4:24 ) {
 
 reportTotal [ ,c(4:24)]<- round (reportTotal [ ,c(4:24)], digits = 0)
 
-colnames(reportTotal) [31] <- "поставщик"
+names(reportTotal) [c(31,32)] <- c("поставщик", "ответственный")
 
 reportTotal<-reportTotal[order(reportTotal$code,reportTotal$id),]
-reportTotal<- reportTotal[ ,c(1:3,27:31,4:24)]
+reportTotal<- reportTotal[ ,c(1:3,27:32,4:24)]
 
-colnames(reportTotal) <- c("код", "наименование", "статус", "мин. партия, шт", "страх. запас, нед", "срок доставки, нед", "партия для произ-ва, нед", "поставщик", colnames(reportTotal)[9:29])
+colnames(reportTotal) <- c("код", "наименование", "статус", "мин. партия, шт", "страх. запас, нед", "срок доставки, нед", "партия для произ-ва, нед", "поставщик", "ответственный", colnames(reportTotal)[10:30])
 
 write.csv(reportTotal, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/reportTotal.csv", row.names= FALSE, fileEncoding = "UTF-8")
+
+# reportTotalsub$sum<-rowSums(reportTotal [,c(9:12)])
+reportTotalsub<- subset(reportTotal, rowSums(reportTotal [,c(10:13)])>0)
+reportTotalsub<- subset(reportTotalsub, reportTotalsub[,3] =="заказать") [,c(1,2,6,8,9,10,11,12,13)] # фильтр по заказам на текущей неделе
+#сохранение в формате, необходиомом для преобразования в xls
+write.csv(reportTotalsub, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/reportTotalsub.csv", row.names= FALSE, fileEncoding = "UTF-8")
+#сохранение в формате, необходимом для втсавки в email
+write.csv(reportTotalsub, "C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Полученные таблицы для расчетов/reportTotalsubMail.csv", row.names= FALSE)
+
+
+
 

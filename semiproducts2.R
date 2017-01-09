@@ -72,8 +72,8 @@ code<-dcast(semiProducts, code ~ id, fun.aggregate=sum) #определеям для каждого 
 # для каждого кода взять потребность последнего этапа и рассчитать потребность в предшествующих этапах,
 # исходя из остатков каждого предшествующего этапа
 
-
-for (i in 1:nrow(lastStageCode) ) { # запуск обработчика по количеству кодов последного этапа
+#nrow(lastStageCode)
+for (i in 1: nrow(lastStageCode)) { # запуск обработчика по количеству кодов последного этапа
   #nrow (lastStageCode)
   lastStage<-max(grep(lastStageCode [i,1], semiProducts[ ,1])) # строка относящаяся к последнему этапу кода полуфабриката
   firstStage<- min(grep(lastStageCode [i,1], semiProducts[ ,1])) # строка относящаяся к первому этапу кода полуфабриката
@@ -152,7 +152,7 @@ write.csv(purchase, "C:/Documents and Settings/smirnov/Мои документы/Максим/R пл
 
 #загружаем потребление на месяц, СЛЕДУЮЩИЙ ЗА ТЕКУЩИМ
 mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/потребление компонентов мес ", 
-           ifelse(month(Sys.Date())+1<10,0,""),
+           ifelse(month(Sys.Date())+1-12<10,0,""),
            ifelse(month(Sys.Date())+1<=12, month(Sys.Date())+1, month(Sys.Date())+1-12) , ".xls", sep="")
 componentsConsumption<-read_excel(mu)
 
@@ -257,7 +257,7 @@ write.csv(purchase, "C:/Documents and Settings/smirnov/Мои документы/Максим/R пл
 
 #загружаем потребление через 2 МЕСЯЦА
 mu<-paste ("C:/Documents and Settings/smirnov/Мои документы/Максим/R план/Отчеты для расчетов/потребление компонентов мес ", 
-           ifelse(month(Sys.Date())+2<10,0,""),
+           ifelse(month(Sys.Date())+2-12<10,0,""),
            ifelse(month(Sys.Date())+2<=12, month(Sys.Date())+2, month(Sys.Date())+2-12), ".xls", sep="")
 componentsConsumption<-read_excel(mu)
 

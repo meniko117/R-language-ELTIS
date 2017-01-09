@@ -13,7 +13,7 @@ cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, Numer
             
             out (i+2*nrow, j) = z(i,j);             // включаем блок с товарами в пути (нижн€€ треть таблицы)
             
-            out (i,j) = out(i, j-1)-y(i,j-1)+z(i,j)+out(i+nrow,j-p(i,2)); // результирующее значение по остаткам на начало недели
+            out (i,j) = out(i, j-1)-y(i,j)+z(i,j)+out(i+nrow,j-p(i,2)); // результирующее значение по остаткам на начало недели
             //вычитаем расход за предыдущую неделю и добавл€ем сгенерированный заказ на lead time недель ранее
             // также добавл€ем товары в пути, которые поступают на текущей неделе
             //p(i,2) 5-€ колонка в таблице параметров срок доставки
@@ -38,7 +38,7 @@ cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, Numer
             //на более ранний срок равный "сроку доставки"
             
             out (i+nrow,j) = out(i+nrow, j+(p(i,2))); //  "p(i,2)" уменьшить еще на ≈ƒ»Ќ»÷”?
-            out (i,j+1) = out(i, j-1)-y(i,j-1)+z(i,j)+out(i+nrow,j-p(i,2));  // добавить в левой части уравнени€  out (...j+1), чтобы сохранить превоначальные остатки
+            out (i,j+1) = out(i, j-1)-y(i,j)+z(i,j)+out(i+nrow,j-p(i,2));  // добавить в левой части уравнени€  out (...j+1), чтобы сохранить превоначальные остатки
             
             }
             
@@ -59,7 +59,7 @@ cppFunction('NumericMatrix stockTurnover(NumericMatrix x, NumericMatrix y, Numer
             }
             //            out (i+nrow,j) = out(i+nrow, j+(p(i,2)-1)); // !!!! добавлена строка
             
-            out (i,j) = out(i, j-1)-y(i,j-1)+z(i,j)+out(i+nrow,j-p(i,2));
+            out (i,j) = out(i, j-1)-y(i,j)+z(i,j)+out(i+nrow,j-p(i,2));
             
             }                                       // конец обхода колонок
             
