@@ -1,3 +1,19 @@
+# условие задачи
+
+#Please download this CVS file. It contains data in the following format:
+
+#Time,PRICE,SIZE,EXCHANGE
+
+#10:00:00.009,135.14,100,V
+
+#The line above should be read as 100 shares were sold for $135.14 at 10:00:00.009 at the exchange "V".
+
+#Please find the one second-window during which the largest number of trades took place. Do the same considering trades for each exchange separately.
+
+#Your code will be evaluated based on its correctness, performance/computational complexity, and readability (feel free to comment your code and/or write a description).
+
+#решение
+
 start.time <- Sys.time() # измерение времени работы скрипта
 
 library(stringr) # библиотека для работы со строками
@@ -13,11 +29,11 @@ dataset$time<- as.numeric(strptime(dataset[,1], format="%H:%M:%OS"))
 
 
 
-#конвертация цифрового timestamp с миллисекундами обратно
+# конвертация цифрового timestamp с миллисекундами обратно
 # сразу становится видно, что, например,  встроках № 2, 6, 7 обратная конвертация дала timestamp  с ошибкой в 1 мс
-#параметр OS3 при выборе форматирвоания указвает количество знаков при округлении до миллисекунд
+# параметр OS3 при выборе форматирования указывает количество знаков при округлении до миллисекунд
 # если подставить OS4, то видно, что в строках № 2, 6, 7 на 0.1 мс меньше, что система не учитывает при округлении
-# с учетом вышесказанного в строке 97 приведено решение, чтобы потерь 1 мс не происходило при отображении резлуьтата
+# с учетом вышесказанного в строке 111 кода ниже приведено решение, чтобы потерь 1 мс не происходило при отображении резлуьтата
 dataset$timemillisec<-format(anytime(as.numeric(strptime(dataset[,1], "%H:%M:%OS"))), format = "%H:%M:%OS4") 
 
 
