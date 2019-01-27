@@ -12,7 +12,7 @@
 
 #Your code will be evaluated based on its correctness, performance/computational complexity, and readability (feel free to comment your code and/or write a description).
 
-#решение
+#решение (требует оптимизации скорости расчета)
 
 start.time <- Sys.time() # измерение времени работы скрипта
 
